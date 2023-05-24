@@ -1,5 +1,6 @@
-import { cva } from "class-variance-authority";
-import Image from 'next/image'
+import Image from 'next/image';
+
+let a = 5;
 
 export default function Home() {
   return (
@@ -110,5 +111,5 @@ export default function Home() {
         </a>
       </div>
     </main>
-  )
+  );
 }
