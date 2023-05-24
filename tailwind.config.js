@@ -22,6 +22,12 @@ module.exports = {
       'text-dark': '#222222',
       'text-light': '#666666',
     },
+    fontFamily: {
+      header: ['var(--font-montserrat)'],
+      'sub-heading': ['var(--font-open-sans)'],
+      body: ['var(--font-roboto)'],
+      accent: ['var(--font-montserrat)'],
+    },
   },
   plugins: [],
 };
