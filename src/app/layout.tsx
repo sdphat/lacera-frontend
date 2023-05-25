@@ -2,7 +2,7 @@ import './globals.css';
 import { Inter, Roboto, Montserrat, Open_Sans } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'] });
-const roboto = Roboto({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-roboto' });
+const roboto = Roboto({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-roboto' });
 
 const montserrat = Montserrat({
   subsets: ['latin'],
