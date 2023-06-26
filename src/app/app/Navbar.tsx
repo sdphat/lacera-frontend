@@ -4,7 +4,7 @@ import { FiLogOut, FiMenu, FiUser } from 'react-icons/fi';
 
 const Navbar = () => {
   return (
-    <div className="navbar bg-blue-500 min-h-0">
+    <div className="navbar border-b-2 border-gray-200 min-h-0">
       <div className="flex-1 pl-2">
         <h3 className="text-xl font-bold">Lacera</h3>
       </div>

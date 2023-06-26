@@ -1,37 +1,37 @@
-import React from 'react';
+'use client';
+import React, { MouseEventHandler } from 'react';
 import Image from 'next/image';
+import Avatar from '@/app/components/Avatar';
 
 interface ConversationMenuItemProps {
   title: string;
   subTitle?: string;
   avatarUrl: string;
   includeDivider?: boolean;
+  onAvatarClick?: MouseEventHandler<HTMLElement>;
+  onClick?: MouseEventHandler<HTMLElement>;
 }
 
-// Pass in info + divider included?
 const ConversationMenuItem: React.FC<ConversationMenuItemProps> = ({
   avatarUrl,
   includeDivider = false,
   subTitle,
   title,
+  onAvatarClick = () => {},
+  onClick = () => {},
 }) => {
   return (
-    <>
-      <div className="flex w-full">
-        <div className="avatar flex-none">
-          <div className="w-11 rounded-full">
-            <Image alt="" width={24} height={24} src={avatarUrl} />
-          </div>
-        </div>
-        <div className="flex-1 min-w-0 ml-2">
-          <div className="font-bold">{title}</div>
-          <div className="text-gray-500 text-sm overflow-ellipsis whitespace-nowrap overflow-hidden">
-            {subTitle}
-          </div>
-        </div>
+    <div onClick={onClick} className="w-full cursor-pointer bg-base-100">
+      <div className="w-full hover:bg-blue-50 py-4 px-3">
+        <Avatar
+          avatarUrl={avatarUrl}
+          onAvatarClick={onAvatarClick}
+          title={title}
+          subTitle={subTitle}
+        />
       </div>
-      {includeDivider && <div className="divider"></div>}
-    </>
+      {includeDivider && <div className="divider my-0 h-0"></div>}
+    </div>
   );
 };
 

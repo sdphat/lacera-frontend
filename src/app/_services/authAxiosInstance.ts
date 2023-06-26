@@ -1,28 +1,16 @@
 import axios from 'axios';
+import { getAccessToken, getRefreshToken, setAccessToken } from '../_lib/auth';
+import { refreshAccessToken } from './auth.service';
 
 // Create an instance of Axios
 const api = axios.create({
-  baseURL: 'http://localhost:3001',
+  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
 });
-
-// Function to refresh the access token using the refresh token
-async function refreshAccessToken(refreshToken: string) {
-  try {
-    const response = await axios.post('http://localhost:3001/auth/refresh', {
-      refresh_token: refreshToken,
-    });
-    const { access_token } = response.data;
-    return access_token;
-  } catch (error) {
-    // Handle token refresh error, e.g., redirect to login page
-    throw error;
-  }
-}
 
 // Intercept requests and attach the access token to the Authorization header
 api.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem('access_token');
+    const accessToken = getAccessToken();
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -38,11 +26,11 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      const refreshToken = localStorage.getItem('refresh_token');
+      const refreshToken = getRefreshToken();
       if (refreshToken) {
         try {
           const accessToken = await refreshAccessToken(refreshToken);
-          localStorage.setItem('access_token', accessToken);
+          setAccessToken(accessToken);
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch (refreshError) {

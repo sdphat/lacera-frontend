@@ -10,6 +10,7 @@ import { cva } from 'class-variance-authority';
 import { login } from '../_services/auth.service';
 import { getCountryCallingCode } from 'libphonenumber-js';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '../_store/auth.store';
 
 const inputClasses = 'input input-md input-bordered w-full focus:outline-none';
 const headerClasses =
@@ -19,14 +20,10 @@ const submitButtonClasses = cva('btn btn-primary w-full max-w-sm', {
     state: {
       valid: '',
       invalid: 'btn-disabled',
-      submitting: 'loading',
+      submitting: 'btn-disabled',
     },
   },
 });
-
-export const metadata: Metadata = {
-  title: 'Lacera',
-};
 
 const Login = () => {
   const {
@@ -37,25 +34,25 @@ const Login = () => {
     setError,
     formState: { isValid, isSubmitting, errors },
   } = useForm({ mode: 'onChange' });
+  const { login } = useAuthStore();
   const [countryCode, setCountryCode] = useState('VN');
   const router = useRouter();
   const submitButtonState = !isValid ? 'invalid' : isSubmitting ? 'submitting' : 'valid';
 
   const onSubmit = handleSubmit(async (data) => {
-    const responseData = await login({
+    const response = await login({
       phoneNumber: `+${getCountryCallingCode(countryCode as any)}${data.phoneNumber}`,
       password: data.password,
     });
 
-    if ('error' in responseData) {
-      if (responseData.error === 'mismatch') {
+    if (response) {
+      if (response.error === 'mismatch') {
         setError('root.mismatch', {
           type: 'mismatch',
           message: 'Username or password is incorrect. Please check again.',
         });
       }
     } else {
-      window.localStorage.setItem('refresh_token', responseData.refreshToken);
       router.push('/app');
     }
   });
@@ -134,6 +131,11 @@ const Login = () => {
                     })}
                     disabled={submitButtonState !== 'valid'}
                   >
+                    <span
+                      className={
+                        submitButtonState === 'submitting' ? 'loading loading-spinner' : ''
+                      }
+                    ></span>
                     {!isSubmitting && 'Login'}
                   </button>
                   <a className="link link-primary text-sm mt-4">Forgot password?</a>

@@ -1,63 +1,59 @@
-import Image from 'next/image';
-import React from 'react';
+'use client';
+
+import React, { use, useMemo } from 'react';
 import ConversationMenuItem from './ConversationMenuItem';
+import { useRouter } from 'next/navigation';
+import { Conversation } from '@/types/types';
+import { getConversations } from '@/app/_services/chat.service';
+import { useAuthStore } from '@/app/_store/auth.store';
+import { useConversationStore } from '@/app/_store/conversation.store';
 
-const conversations = [
-  {
-    id: 1,
-    avatarUrl: '/photo-1534528741775-53994a69daeb.jpg',
-    title: 'Natalia',
-    subTitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
-  },
-  {
-    id: 2,
-    avatarUrl: '/photo-1534528741775-53994a69daeb.jpg',
-    title: 'Natalia',
-    subTitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
-  },
-  {
-    id: 3,
-    avatarUrl: '/photo-1534528741775-53994a69daeb.jpg',
-    title: 'Natalia',
-    subTitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
-  },
-  {
-    id: 4,
-    avatarUrl: '/photo-1534528741775-53994a69daeb.jpg',
-    title: 'Natalia',
-    subTitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
-  },
-  {
-    id: 5,
-    avatarUrl: '/photo-1534528741775-53994a69daeb.jpg',
-    title: 'Natalia',
-    subTitle: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
-  },
-];
-
-const Sidebar = () => {
-  const conversationMenuItems = conversations.map((conversation, i) => (
-    <ConversationMenuItem
-      key={conversation.id}
-      avatarUrl={conversation.avatarUrl}
-      title={conversation.title}
-      subTitle={conversation.subTitle}
-      includeDivider={i !== conversations.length - 1}
-    />
-  ));
+const Sidebar = ({ conversations }: { conversations: Conversation[] }) => {
+  const router = useRouter();
+  const { currentUser } = useAuthStore();
+  const conversationMenuItems = conversations.map((conversation, i) => {
+    const isPrivateChat = conversation.participants.length === 2;
+    const recipient = conversation.participants.find((p) => p.id !== currentUser.id);
+    const lastMessage = conversation.messages[conversation.messages.length - 1];
+    console.log(lastMessage);
+    return (
+      <ConversationMenuItem
+        key={conversation.id}
+        avatarUrl={isPrivateChat ? recipient!.avatarUrl : conversation.avatar}
+        title={
+          isPrivateChat ? `${recipient!.firstName}  ${recipient!.lastName}` : conversation.title
+        }
+        subTitle={
+          lastMessage
+            ? lastMessage.sender.id === currentUser.id
+              ? `You: ${lastMessage.content}`
+              : `${lastMessage.sender.firstName} ${lastMessage.sender.lastName}: ${lastMessage.content}`
+            : 'Say hi to everyone 😊'
+        }
+        includeDivider={i !== conversations.length - 1}
+        onClick={() => router.push(`app/conversations/${conversation.id}`)}
+      />
+    );
+  });
 
   return (
-    <div>
-      <div className="menu w-80 py-4 px-2 h-full">{conversationMenuItems}</div>
+    <div className="menu w-80 py-4 h-full overflow-y-auto flex-nowrap border-r-2 border-gray-200">
+      <div className="prose mb-5 px-3">
+        <h2>Conversations</h2>
+      </div>
+      {conversationMenuItems}
     </div>
   );
 };
 
 export default function ConversationLayout({ children }: { children: React.ReactNode }) {
+  const { init, conversations } = useConversationStore();
+  const conversationsInitPromise = useMemo(() => init(), [init]);
+  const _init = use(conversationsInitPromise);
   return (
     <div className="h-full flex flex-1">
       <div className="flex-none">
-        <Sidebar />
+        <Sidebar conversations={conversations} />
       </div>
       {children}
     </div>

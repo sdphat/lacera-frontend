@@ -1,22 +1,37 @@
 import Link from 'next/link';
-import React from 'react';
-import { FiBook } from 'react-icons/fi';
+import React, { ReactNode } from 'react';
 import { MdChatBubble, MdOutlineContactPage } from 'react-icons/md';
+
+interface NavItem {
+  icon: ReactNode;
+  text: string;
+  href: string;
+}
+
+const navItems: NavItem[] = [
+  {
+    icon: <MdOutlineContactPage color="white" size={24} />,
+    text: 'Contacts',
+    href: '/app/contacts',
+  },
+  {
+    icon: <MdChatBubble color="white" size={24} />,
+    text: 'Conversations',
+    href: '/app/conversations',
+  },
+];
 
 const Sidebar = () => {
   return (
     <div>
       <div className="menu bg-blue-400 w-56 h-full">
-        <li className="text-white">
-          <a>
-            <MdOutlineContactPage color="white" size={24} /> Contacts
-          </a>
-        </li>
-        <li className="text-white">
-          <Link href="/app/conversations">
-            <MdChatBubble color="white" size={24} /> Conversations
-          </Link>
-        </li>
+        {navItems.map((item) => (
+          <li key={item.text} className="text-white">
+            <Link className="py-2.5 text-base" href={item.href}>
+              {item.icon} {item.text}
+            </Link>
+          </li>
+        ))}
       </div>
     </div>
   );
