@@ -23,6 +23,8 @@ const updateConversationMessage = (conversations: Conversation[], message: Messa
   return conversations;
 };
 
+let isIntialized = false;
+
 export const useConversationStore = create<{
   conversations: Conversation[];
   sendMessage: (sendMessageDto: SendMessageDto) => Promise<boolean>;
@@ -33,6 +35,10 @@ export const useConversationStore = create<{
     return sendMessage(sendMessageDto);
   },
   init: async () => {
+    if (isIntialized) {
+      return;
+    }
+    isIntialized = true;
     conversationSocket.addEventListener({
       successEvent: 'update',
       onSuccess: (message: Message) => {
@@ -42,8 +48,6 @@ export const useConversationStore = create<{
         updateConversationMessage(conversations, message);
         set({ conversations });
       },
-      errorEvent: 'update:error',
-      onError: (err) => console.log('Error: ' + err),
     });
 
     conversationSocket.addEventListener({
@@ -55,10 +59,7 @@ export const useConversationStore = create<{
         updateConversationMessage(conversations, message);
         set({ conversations });
       },
-      errorEvent: 'create:error',
-      onError: (err) => console.log('Success: ' + err),
     });
-
     const conversations = await getConversations();
     set({ conversations });
   },

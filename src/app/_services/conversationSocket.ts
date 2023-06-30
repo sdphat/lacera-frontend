@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
-import { getRefreshToken } from '../_lib/auth';
+import { getAccessToken, getRefreshToken } from '../_lib/auth';
 import { refreshAccessToken } from './auth.service';
+import { useConversationStore } from '../_store/conversation.store';
 
 type SocketEventListener<ReturnType = any> = (message: ReturnType) => void;
 
@@ -21,14 +22,30 @@ export const socketInit = ({
     ...socketConfig,
   });
 
-  socket.on('errorEvent', async (errObj) => {
-    if (errObj.error === 'unauthorized') {
-      console.log(errObj.error);
-    }
-  });
-
   return {
     socket,
+
+    async emit(event: string, data?: object) {
+      socket.emit(event, data);
+    },
+
+    async emitWithAck(event: string, data = {}) {
+      console.log('EmitWithAck', event);
+      const result = await socket.emitWithAck(event, data);
+      console.log('emitWithAck: ', JSON.stringify(result));
+      if ('error' in result) {
+        if (result.error === 'unauthorized') {
+          socket.disconnect();
+          socket.connect();
+          const tryAgainResult = await socket.emitWithAck(event, data);
+          if ('error' in tryAgainResult && tryAgainResult.error === 'unauthorized') {
+            return { error: 'return to login page...' };
+          }
+          return tryAgainResult;
+        }
+      }
+      return result;
+    },
 
     addEventListener({
       successEvent,

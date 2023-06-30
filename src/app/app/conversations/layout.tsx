@@ -1,10 +1,9 @@
 'use client';
 
-import React, { use, useMemo } from 'react';
+import React, { use, useEffect, useMemo } from 'react';
 import ConversationMenuItem from './ConversationMenuItem';
 import { useRouter } from 'next/navigation';
 import { Conversation } from '@/types/types';
-import { getConversations } from '@/app/_services/chat.service';
 import { useAuthStore } from '@/app/_store/auth.store';
 import { useConversationStore } from '@/app/_store/conversation.store';
 

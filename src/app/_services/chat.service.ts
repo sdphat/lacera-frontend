@@ -12,12 +12,15 @@ export const conversationSocket = socketInit({
 });
 
 export const sendMessage = async (sendMessageDto: SendMessageDto): Promise<boolean> => {
-  const result = await conversationSocket.socket.emitWithAck('create', sendMessageDto);
-  return Boolean(result);
+  const result = await conversationSocket.emitWithAck('create', sendMessageDto);
+  return Boolean(result.error);
 };
 
 export const getConversations = async () => {
-  const conversations: Conversation[] = await conversationSocket.socket.emitWithAck('fetchAll');
+  const { error, data: conversations } = await conversationSocket.emitWithAck('fetchAll');
+  if (error) {
+    return null;
+  }
   conversations.forEach((c) => {
     c.participants.forEach((p) => (p.lastActive = new Date(p.lastActive)));
     c.messages.forEach((m) => {
