@@ -1,9 +1,14 @@
 'use client';
 
 import React, { useState, MouseEventHandler, useRef, useEffect, useLayoutEffect } from 'react';
-import Avatar from '@/app/components/Avatar';
+import Avatar from '@/app/_components/Avatar';
 import { formatDistanceToNow, sub } from 'date-fns';
-import { Conversation as ConversationType, ConversationLogItem, User } from '@/types/types';
+import {
+  Conversation as ConversationType,
+  ConversationLogItem,
+  User,
+  GroupConversation,
+} from '@/types/types';
 import MessageBlock from './MessageBlock';
 import InputBar from './InputBar';
 import { FiMoreVertical } from 'react-icons/fi';
@@ -41,20 +46,22 @@ export function Conversation() {
   const justSentRef = useRef(false);
 
   const conversationId = Number(params.id);
-  const conversation: ConversationType = conversations.find(
-    (c) => c.id === conversationId,
-  ) as ConversationType;
-  const isPrivateChat = conversation.participants.length === 2;
-  const recipient = conversation.participants.find(
-    (p: { id: number }) => p.id !== currentUser.id,
-  ) as User;
+  let conversation = conversations.find((c) => c.id === conversationId);
 
   useEffect(() => {
     if (justSentRef.current) {
       chatboxRef.current?.scrollTo({ top: chatboxRef.current.scrollHeight });
       justSentRef.current = false;
     }
-  }, [conversation.messages.length]);
+  }, [conversation?.messages.length]);
+
+  if (!conversation) {
+    return;
+  }
+  const isPrivateChat = conversation.type === 'private';
+  const recipient = conversation.participants.find(
+    (p: { id: number }) => p.id !== currentUser.id,
+  ) as User;
 
   const sendMessageUtil = async (content: string) => {
     justSentRef.current = true;
@@ -85,7 +92,7 @@ export function Conversation() {
           ) : (
             <Avatar
               avatarUrl={conversation.avatar}
-              title={conversation.title}
+              title={(conversation as GroupConversation).title}
               subTitle={`${conversation.participants.length} members`}
             />
           )}

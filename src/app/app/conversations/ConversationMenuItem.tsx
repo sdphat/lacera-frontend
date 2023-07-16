@@ -1,7 +1,7 @@
 'use client';
 import React, { MouseEventHandler } from 'react';
 import Image from 'next/image';
-import Avatar from '@/app/components/Avatar';
+import Avatar from '@/app/_components/Avatar';
 
 interface ConversationMenuItemProps {
   title: string;

@@ -2,10 +2,12 @@ import { create } from 'zustand';
 import {
   SendMessageDto,
   conversationSocket,
+  getConversation,
   getConversations,
   sendMessage,
 } from '../_services/chat.service';
-import { Conversation, Message } from '@/types/types';
+import { Conversation, ConversationType, Message } from '@/types/types';
+import { useAuthStore } from './auth.store';
 
 const updateConversationMessage = (conversations: Conversation[], message: Message) => {
   const foundConversation = conversations.find((c) => c.id === message.conversationId);
@@ -29,6 +31,19 @@ export const useConversationStore = create<{
   conversations: Conversation[];
   sendMessage: (sendMessageDto: SendMessageDto) => Promise<boolean>;
   init: () => Promise<any>;
+  getConversation: (
+    params:
+      | {
+          id: number;
+        }
+      | {
+          targetId: number;
+        }
+      | {
+          id: number;
+          targetId: number;
+        },
+  ) => Promise<Conversation | null>;
 }>()((set, get) => ({
   conversations: [],
   sendMessage: async (sendMessageDto: SendMessageDto) => {
@@ -61,6 +76,38 @@ export const useConversationStore = create<{
       },
     });
     const conversations = await getConversations();
-    set({ conversations });
+    set({ conversations: conversations ?? undefined });
+  },
+  async getConversation(params) {
+    const { conversations } = get();
+    const { currentUser } = useAuthStore.getState();
+
+    if ('id' in params && conversations.find((c) => c.id === params.id)) {
+      return conversations.find((c) => c.id === params.id) ?? null;
+    }
+
+    if (
+      'targetId' in params &&
+      conversations.find(
+        (c) =>
+          c.type === 'private' &&
+          c.participants.every((p) => p.id === currentUser.id || p.id === params.targetId),
+      )
+    ) {
+      return (
+        conversations.find(
+          (c) =>
+            c.type === 'private' &&
+            c.participants.every((p) => p.id === currentUser.id || p.id === params.targetId),
+        ) ?? null
+      );
+    }
+
+    const requestedConversation = await getConversation(params);
+    if (requestedConversation) {
+      set({ conversations: [...conversations, requestedConversation] });
+      return requestedConversation;
+    }
+    return null;
   },
 }));

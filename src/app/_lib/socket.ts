@@ -1,7 +1,6 @@
 import { io } from 'socket.io-client';
-import { getAccessToken, getRefreshToken } from '../_lib/auth';
-import { refreshAccessToken } from './auth.service';
-import { useConversationStore } from '../_store/conversation.store';
+import { getRefreshToken } from './auth';
+import { refreshAccessToken } from '../_services/auth.service';
 
 type SocketEventListener<ReturnType = any> = (message: ReturnType) => void;
 
@@ -32,7 +31,6 @@ export const socketInit = ({
     async emitWithAck(event: string, data = {}) {
       console.log('EmitWithAck', event);
       const result = await socket.emitWithAck(event, data);
-      console.log('emitWithAck: ', JSON.stringify(result));
       if ('error' in result) {
         if (result.error === 'unauthorized') {
           socket.disconnect();

@@ -1,11 +1,10 @@
-import Avatar from '@/app/components/Avatar';
+import Avatar from '@/app/_components/Avatar';
 import { ReactionType } from '@/types/types';
 import { cva } from 'class-variance-authority';
 import { formatDistanceToNow } from 'date-fns';
 import React, { MouseEventHandler, ReactElement, ReactNode } from 'react';
 import { FiHeart, FiThumbsUp } from 'react-icons/fi';
 import { TbCheck, TbChecks } from 'react-icons/tb';
-import emojiRegex from 'emoji-regex';
 import { hasOnlyOneEmoji } from '@/app/_lib/emoji';
 
 export type StatusType = 'sending' | 'sent' | 'received' | 'seen';

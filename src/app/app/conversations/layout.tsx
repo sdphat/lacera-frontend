@@ -3,7 +3,7 @@
 import React, { use, useEffect, useMemo } from 'react';
 import ConversationMenuItem from './ConversationMenuItem';
 import { useRouter } from 'next/navigation';
-import { Conversation } from '@/types/types';
+import { Conversation, GroupConversation, User } from '@/types/types';
 import { useAuthStore } from '@/app/_store/auth.store';
 import { useConversationStore } from '@/app/_store/conversation.store';
 
@@ -11,28 +11,38 @@ const Sidebar = ({ conversations }: { conversations: Conversation[] }) => {
   const router = useRouter();
   const { currentUser } = useAuthStore();
   const conversationMenuItems = conversations.map((conversation, i) => {
-    const isPrivateChat = conversation.participants.length === 2;
-    const recipient = conversation.participants.find((p) => p.id !== currentUser.id);
     const lastMessage = conversation.messages[conversation.messages.length - 1];
-    console.log(lastMessage);
-    return (
-      <ConversationMenuItem
-        key={conversation.id}
-        avatarUrl={isPrivateChat ? recipient!.avatarUrl : conversation.avatar}
-        title={
-          isPrivateChat ? `${recipient!.firstName}  ${recipient!.lastName}` : conversation.title
-        }
-        subTitle={
-          lastMessage
-            ? lastMessage.sender.id === currentUser.id
-              ? `You: ${lastMessage.content}`
-              : `${lastMessage.sender.firstName} ${lastMessage.sender.lastName}: ${lastMessage.content}`
-            : 'Say hi to everyone 😊'
-        }
-        includeDivider={i !== conversations.length - 1}
-        onClick={() => router.push(`app/conversations/${conversation.id}`)}
-      />
-    );
+    const isPrivateChat = conversation.type === 'private';
+    const subTitle = lastMessage
+      ? lastMessage.sender.id === currentUser.id
+        ? `You: ${lastMessage.content}`
+        : `${lastMessage.sender.firstName} ${lastMessage.sender.lastName}: ${lastMessage.content}`
+      : 'Say hi to everyone 😊';
+    if (isPrivateChat) {
+      const recipient = conversation.participants.find((p) => p.id !== currentUser.id)!;
+      return (
+        <ConversationMenuItem
+          key={conversation.id}
+          avatarUrl={recipient.avatarUrl}
+          title={`${recipient!.firstName}  ${recipient!.lastName}`}
+          subTitle={subTitle}
+          includeDivider={i !== conversations.length - 1}
+          onClick={() => router.push(`app/conversations/${conversation.id}`)}
+        />
+      );
+    } else {
+      const group = conversation as GroupConversation;
+      return (
+        <ConversationMenuItem
+          key={group.id}
+          avatarUrl={group.avatar}
+          title={group.title}
+          subTitle={subTitle}
+          includeDivider={i !== conversations.length - 1}
+          onClick={() => router.push(`app/conversations/${group.id}`)}
+        />
+      );
+    }
   });
 
   return (
@@ -47,8 +57,10 @@ const Sidebar = ({ conversations }: { conversations: Conversation[] }) => {
 
 export default function ConversationLayout({ children }: { children: React.ReactNode }) {
   const { init, conversations } = useConversationStore();
-  const conversationsInitPromise = useMemo(() => init(), [init]);
-  const _init = use(conversationsInitPromise);
+  useEffect(() => {
+    init();
+  }, [init]);
+
   return (
     <div className="h-full flex flex-1">
       <div className="flex-none">
