@@ -42,12 +42,16 @@ const Search = () => {
         <div className="flex flex-wrap mt-12 gap-y-6">
           {searchResult.map((contact) => (
             <div key={contact.id} className="w-[33%]">
-              <Avatar
-                avatarUrl={contact.avatarUrl}
-                title={`${contact.firstName} ${contact.lastName}`}
-                subTitle={`Active ${formatDistanceToNow(new Date(contact.lastActive))} ago`}
-                onAvatarClick={() => router.push(`/app/profile/${contact.id}`)}
-              />
+              <div
+                className="max-w-full w-max"
+                onClick={() => router.push(`/app/profile/${contact.id}`)}
+              >
+                <Avatar
+                  avatarUrl={contact.avatarUrl}
+                  title={`${contact.firstName} ${contact.lastName}`}
+                  subTitle={`Active ${formatDistanceToNow(new Date(contact.lastActive))} ago`}
+                />
+              </div>
             </div>
           ))}
         </div>
