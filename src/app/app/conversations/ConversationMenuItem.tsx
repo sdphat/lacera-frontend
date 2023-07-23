@@ -1,6 +1,5 @@
 'use client';
 import React, { MouseEventHandler } from 'react';
-import Image from 'next/image';
 import Avatar from '@/app/_components/Avatar';
 import { Conversation, GroupConversation } from '@/types/types';
 
@@ -9,6 +8,7 @@ export interface ConversationMenuItemProps {
   subTitle?: string;
   avatarUrl: string;
   includeDivider?: boolean;
+  online?: boolean;
   onAvatarClick?: MouseEventHandler<HTMLElement>;
   onClick?: MouseEventHandler<HTMLElement>;
 }
@@ -18,6 +18,7 @@ const ConversationMenuItem: React.FC<ConversationMenuItemProps> = ({
   includeDivider = false,
   subTitle,
   title,
+  online,
   onAvatarClick = () => {},
   onClick = () => {},
 }) => {
@@ -25,6 +26,7 @@ const ConversationMenuItem: React.FC<ConversationMenuItemProps> = ({
     <div onClick={onClick} className="w-full cursor-pointer bg-base-100">
       <div className="w-full hover:bg-blue-50 py-4 px-3">
         <Avatar
+          online={online}
           avatarUrl={avatarUrl}
           onAvatarClick={onAvatarClick}
           title={title}
@@ -61,11 +63,13 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
   const isPrivateChat = conversation.type === 'private';
   if (isPrivateChat) {
     const recipient = conversation.participants.find((p) => p.id !== currentUserId)!;
+    console.log(recipient);
     return (
       <ConversationMenuItem
         key={conversation.id}
         avatarUrl={recipient.avatarUrl}
         title={`${recipient!.firstName}  ${recipient!.lastName}`}
+        online={recipient.online}
         subTitle={subTitle}
         includeDivider={includeDivider}
         onClick={onClick}

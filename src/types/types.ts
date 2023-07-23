@@ -10,6 +10,7 @@ export interface User {
   lastName: string;
   avatarUrl: string;
   lastActive: Date;
+  online: boolean;
 }
 
 export interface Message {

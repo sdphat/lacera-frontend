@@ -7,19 +7,22 @@ export interface AvatarProps {
   subTitle?: string;
   avatarUrl: string;
   className?: string;
+  online?: boolean;
 }
 
 const Avatar: React.FC<AvatarProps> = ({
   onAvatarClick,
+  online,
   title,
   subTitle,
   avatarUrl,
   className = '',
 }) => {
+  const avatarAdditionalClasses = online !== undefined ? (online ? 'online' : 'offline') : '';
   if (title || subTitle) {
     return (
       <div className={`flex ${className}`}>
-        <div className="avatar flex-none">
+        <div className={`avatar flex-none ${avatarAdditionalClasses}`}>
           <div onClick={onAvatarClick} className="w-11 rounded-full">
             <Image alt="" width={24} height={24} src={avatarUrl} />
           </div>
@@ -34,7 +37,7 @@ const Avatar: React.FC<AvatarProps> = ({
     );
   } else {
     return (
-      <div className="avatar flex-none">
+      <div className={`avatar flex-none ${avatarAdditionalClasses}`}>
         <div onClick={onAvatarClick} className="w-11 rounded-full">
           <Image alt="" width={24} height={24} src={avatarUrl} />
         </div>

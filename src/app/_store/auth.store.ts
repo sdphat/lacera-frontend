@@ -3,18 +3,13 @@ import { persist } from 'zustand/middleware';
 import { LoginPayload, login } from '../_services/auth.service';
 
 export const useAuthStore = create<{
-  currentUser: { id: number; firstName: string; lastName: string };
+  currentUser?: { id: number; firstName: string; lastName: string };
   refreshToken: string;
   accessToken: string;
   login: (loginPayload: LoginPayload) => Promise<{ error: string } | undefined>;
 }>()(
   persist(
     (set, get) => ({
-      currentUser: {
-        id: 1,
-        firstName: 'John',
-        lastName: 'Doe',
-      },
       refreshToken: '',
       accessToken: '',
 

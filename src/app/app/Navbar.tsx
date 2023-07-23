@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import React from 'react';
-import { FiLogOut, FiMenu, FiUser } from 'react-icons/fi';
+import { FiLogOut, FiUser } from 'react-icons/fi';
+import { logout } from '../_services/auth.service';
 
 const Navbar = () => {
   return (
@@ -26,10 +27,10 @@ const Navbar = () => {
               </a>
             </li>
             <li>
-              <a>
+              <button onClick={logout}>
                 <FiLogOut size={20} />
                 Logout
-              </a>
+              </button>
             </li>
           </ul>
         </div>

@@ -1,7 +1,16 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '../_store/auth.store';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { refreshToken } = useAuthStore();
+  const router = useRouter();
+  if (!refreshToken && typeof window !== undefined) {
+    router.push('/login');
+  }
   return (
     <div className="h-screen">
       <div className="flex flex-col h-full">
