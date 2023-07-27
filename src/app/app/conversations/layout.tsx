@@ -12,7 +12,7 @@ import { debounce } from 'lodash';
 const Sidebar = () => {
   const router = useRouter();
   const { currentUser } = useAuthStore();
-  const { conversations } = useConversationStore();
+  const { conversations, updateMessagesSeenStatus } = useConversationStore();
   const [searchText, setSearchText] = useState('');
   const [searchResult, setSearchResult] = useState<Conversation[]>([]);
 
@@ -49,6 +49,18 @@ const Sidebar = () => {
     searchConversation(conversations, newSearchText);
   };
 
+  const makeClickConversationItemHandler: (
+    conversationId: Conversation,
+  ) => React.MouseEventHandler<HTMLElement> = (conversation) => async (e) => {
+    router.push(`app/conversations/${conversation.id}`);
+    await updateMessagesSeenStatus(
+      conversation.id,
+      conversation.messages.filter(
+        (message) => currentUser.id !== message.senderId && message.status === 'received',
+      ),
+    );
+  };
+
   const content = searchText ? (
     <>
       <div className="prose my-5 px-3">
@@ -61,7 +73,7 @@ const Sidebar = () => {
             currentUserId={currentUser.id}
             key={conversation.id}
             includeDivider={i !== searchResult.length - 1}
-            onClick={() => router.push(`app/conversations/${conversation.id}`)}
+            onClick={makeClickConversationItemHandler(conversation)}
           />
         );
       })}
@@ -78,7 +90,7 @@ const Sidebar = () => {
             currentUserId={currentUser.id}
             key={conversation.id}
             includeDivider={i !== conversations.length - 1}
-            onClick={() => router.push(`app/conversations/${conversation.id}`)}
+            onClick={makeClickConversationItemHandler(conversation)}
           />
         );
       })}

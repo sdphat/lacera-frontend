@@ -9,6 +9,7 @@ export interface ConversationMenuItemProps {
   avatarUrl: string;
   includeDivider?: boolean;
   online?: boolean;
+  unreadMessages?: number;
   onAvatarClick?: MouseEventHandler<HTMLElement>;
   onClick?: MouseEventHandler<HTMLElement>;
 }
@@ -19,12 +20,13 @@ const ConversationMenuItem: React.FC<ConversationMenuItemProps> = ({
   subTitle,
   title,
   online,
+  unreadMessages,
   onAvatarClick = () => {},
   onClick = () => {},
 }) => {
   return (
-    <div onClick={onClick} className="w-full cursor-pointer bg-base-100">
-      <div className="w-full hover:bg-blue-50 py-4 px-3">
+    <div onClick={onClick} className="relative w-full cursor-pointer bg-base-100">
+      <div className="w-full hover:bg-blue-50 py-4 pl-3 pr-8">
         <Avatar
           online={online}
           avatarUrl={avatarUrl}
@@ -32,6 +34,11 @@ const ConversationMenuItem: React.FC<ConversationMenuItemProps> = ({
           title={title}
           subTitle={subTitle}
         />
+        {unreadMessages && (
+          <div className="absolute right-2 top-[45%] translate-y-[-50%] grid place-items-center text-white bg-red-500 rounded-full w-6 h-6">
+            {unreadMessages}
+          </div>
+        )}
       </div>
       {includeDivider && <div className="divider my-0 h-0"></div>}
     </div>
@@ -60,6 +67,12 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
       : `${lastMessage.sender.firstName} ${lastMessage.sender.lastName}: ${lastMessage.content}`
     : 'Start the conversation with a greeting 😊';
 
+  const amountOfUnreadMessages = conversation.messages.reduce(
+    (count, message) =>
+      count + Number(currentUserId !== message.senderId && message.status === 'received'),
+    0,
+  );
+
   const isPrivateChat = conversation.type === 'private';
   if (isPrivateChat) {
     const recipient = conversation.participants.find((p) => p.id !== currentUserId)!;
@@ -69,6 +82,7 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
         key={conversation.id}
         avatarUrl={recipient.avatarUrl}
         title={`${recipient!.firstName}  ${recipient!.lastName}`}
+        unreadMessages={amountOfUnreadMessages || undefined}
         online={recipient.online}
         subTitle={subTitle}
         includeDivider={includeDivider}
@@ -84,6 +98,7 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
         avatarUrl={group.avatar}
         title={group.title}
         subTitle={subTitle}
+        unreadMessages={amountOfUnreadMessages || undefined}
         includeDivider={includeDivider}
         onClick={onClick}
         onAvatarClick={onAvatarClick}

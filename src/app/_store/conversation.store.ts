@@ -44,6 +44,7 @@ export const useConversationStore = create<{
           targetId: number;
         },
   ) => Promise<Conversation | null>;
+  updateMessagesSeenStatus: (conversationId: number, messages: Message[]) => Promise<void>;
 }>()((set, get) => ({
   conversations: [],
   sendMessage: async (sendMessageDto: SendMessageDto) => {
@@ -109,5 +110,22 @@ export const useConversationStore = create<{
       return requestedConversation;
     }
     return null;
+  },
+
+  async updateMessagesSeenStatus(conversationId: number, messages: Message[]) {
+    await Promise.all(
+      messages.map(async (message) =>
+        conversationSocket.emitWithAck('updateMessageStatus', { messageId: message.id }),
+      ),
+    );
+    const { conversations } = get();
+    const localMessages = conversations.find((c) => c.id === conversationId)?.messages || [];
+    messages.forEach((m) => {
+      const foundLocalMessage = localMessages.find((lm) => lm.id === m.id);
+      if (foundLocalMessage) {
+        foundLocalMessage.status = 'seen';
+      }
+    });
+    set({ conversations });
   },
 }));

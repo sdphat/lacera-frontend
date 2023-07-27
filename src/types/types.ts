@@ -13,6 +13,8 @@ export interface User {
   online: boolean;
 }
 
+export type MessageStatus = 'sent' | 'received' | 'seen';
+
 export interface Message {
   id: number;
   senderId: number;
@@ -22,6 +24,7 @@ export interface Message {
   reactions: Partial<Record<ReactionType, number>>;
   createdAt: Date;
   updatedAt: Date;
+  status: MessageStatus;
 }
 
 export interface ConversationLogItem extends Message {}
