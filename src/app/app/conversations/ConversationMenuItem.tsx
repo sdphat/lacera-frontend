@@ -6,7 +6,7 @@ import { Conversation, GroupConversation } from '@/types/types';
 export interface ConversationMenuItemProps {
   title: string;
   subTitle?: string;
-  avatarUrl: string;
+  avatarUrls: string | string[];
   includeDivider?: boolean;
   online?: boolean;
   unreadMessages?: number;
@@ -15,7 +15,7 @@ export interface ConversationMenuItemProps {
 }
 
 const ConversationMenuItem: React.FC<ConversationMenuItemProps> = ({
-  avatarUrl,
+  avatarUrls,
   includeDivider = false,
   subTitle,
   title,
@@ -29,7 +29,7 @@ const ConversationMenuItem: React.FC<ConversationMenuItemProps> = ({
       <div className="w-full hover:bg-blue-50 py-4 pl-3 pr-8">
         <Avatar
           online={online}
-          avatarUrl={avatarUrl}
+          avatarUrls={avatarUrls}
           onAvatarClick={onAvatarClick}
           title={title}
           subTitle={subTitle}
@@ -76,11 +76,10 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
   const isPrivateChat = conversation.type === 'private';
   if (isPrivateChat) {
     const recipient = conversation.participants.find((p) => p.id !== currentUserId)!;
-    console.log(recipient);
     return (
       <ConversationMenuItem
         key={conversation.id}
-        avatarUrl={recipient.avatarUrl}
+        avatarUrls={recipient.avatarUrl}
         title={`${recipient!.firstName}  ${recipient!.lastName}`}
         unreadMessages={amountOfUnreadMessages || undefined}
         online={recipient.online}
@@ -95,7 +94,7 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
     return (
       <ConversationMenuItem
         key={group.id}
-        avatarUrl={group.avatar}
+        avatarUrls={conversation.avatar ?? group.participants.map((p) => p.avatarUrl)}
         title={group.title}
         subTitle={subTitle}
         unreadMessages={amountOfUnreadMessages || undefined}

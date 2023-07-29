@@ -130,13 +130,13 @@ export function Conversation() {
         <div>
           {isPrivateChat ? (
             <Avatar
-              avatarUrl={recipient.avatarUrl}
+              avatarUrls={recipient.avatarUrl}
               title={`${recipient.firstName} ${recipient.lastName}`}
               subTitle={`Active ${formatDistanceToNow(recipient.lastActive)} ago`}
             />
           ) : (
             <Avatar
-              avatarUrl={conversation.avatar}
+              avatarUrls={conversation.avatar ?? conversation.participants.map((p) => p.avatarUrl)}
               title={(conversation as GroupConversation).title}
               subTitle={`${conversation.participants.length} members`}
             />

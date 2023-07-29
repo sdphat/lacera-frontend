@@ -91,7 +91,7 @@ const Message: React.FC<MessageProps> = ({
       className={`flex px-3 ${isSender ? 'justify-end' : 'justify-start'} ${className}`}
     >
       {!isSender && (
-        <div className="flex-none w-11 mr-2">{avatarUrl && <Avatar avatarUrl={avatarUrl} />}</div>
+        <div className="flex-none w-11 mr-2">{avatarUrl && <Avatar avatarUrls={avatarUrl} />}</div>
       )}
       <div className="max-w-[85%]">
         {hasOnlyOneEmoji(content) ? (
@@ -134,7 +134,7 @@ const Message: React.FC<MessageProps> = ({
         )}
       </div>
       {isSender && (
-        <div className="flex-none w-11 ml-2">{avatarUrl && <Avatar avatarUrl={avatarUrl} />}</div>
+        <div className="flex-none w-11 ml-2">{avatarUrl && <Avatar avatarUrls={avatarUrl} />}</div>
       )}
     </div>
   );

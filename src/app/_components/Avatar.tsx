@@ -5,7 +5,7 @@ export interface AvatarProps {
   onAvatarClick?: MouseEventHandler<HTMLElement>;
   title?: string;
   subTitle?: string;
-  avatarUrl: string;
+  avatarUrls: string | string[];
   className?: string;
   online?: boolean;
 }
@@ -15,16 +15,64 @@ const Avatar: React.FC<AvatarProps> = ({
   online,
   title,
   subTitle,
-  avatarUrl,
+  avatarUrls,
   className = '',
 }) => {
   const avatarAdditionalClasses = online !== undefined ? (online ? 'online' : 'offline') : '';
+  const ImageElement =
+    typeof avatarUrls === 'string' ? (
+      <Image alt="" width={24} height={24} src={avatarUrls} />
+    ) : (
+      <div className="flex flex-wrap w-full h-full">
+        {avatarUrls.length > 4 ? (
+          <>
+            <Image
+              className="!w-[50%] !h-[50%]"
+              alt=""
+              width={12}
+              height={12}
+              src={avatarUrls[0]}
+            />
+            <Image
+              className="!w-[50%] !h-[50%]"
+              alt=""
+              width={12}
+              height={12}
+              src={avatarUrls[1]}
+            />
+            <Image
+              className="!w-[50%] !h-[50%]"
+              alt=""
+              width={12}
+              height={12}
+              src={avatarUrls[2]}
+            />
+            <div className="!w-[50%] !h-[50%] bg-gray-400 text-white font-bold text-xl">
+              +{avatarUrls.length - 4}
+            </div>
+          </>
+        ) : (
+          <>
+            {avatarUrls.map((url, i) => (
+              <Image
+                key={url + i}
+                className="!w-[50%] !h-[50%]"
+                alt=""
+                width={12}
+                height={12}
+                src={url}
+              />
+            ))}
+          </>
+        )}
+      </div>
+    );
   if (title || subTitle) {
     return (
       <div className={`flex ${className}`}>
         <div className={`avatar flex-none ${avatarAdditionalClasses}`}>
           <div onClick={onAvatarClick} className="w-11 rounded-full">
-            <Image alt="" width={24} height={24} src={avatarUrl} />
+            {ImageElement}
           </div>
         </div>
         <div className="flex-1 min-w-0 ml-2">
@@ -39,7 +87,7 @@ const Avatar: React.FC<AvatarProps> = ({
     return (
       <div className={`avatar flex-none ${avatarAdditionalClasses}`}>
         <div onClick={onAvatarClick} className="w-11 rounded-full">
-          <Image alt="" width={24} height={24} src={avatarUrl} />
+          {ImageElement}
         </div>
       </div>
     );
