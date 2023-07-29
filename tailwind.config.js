@@ -5,6 +5,24 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  theme: {
+    extend: {
+      keyframes: {
+        'wiggle-down': {
+          '0%, 100%': {
+            transform: 'translateY(3%)',
+          },
+          '50%': {
+            transform: 'translateY(-3%)'
+          }
+        },
+      },
+      animation: {
+        'ping-slow': 'ping 3s linear infinite',
+        'wiggle-down': 'wiggle-down 3s linear infinite'
+      }
+    }
+  },
   daisyui: {
     themes: [
       {

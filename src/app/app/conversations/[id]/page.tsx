@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useState, MouseEventHandler, useRef, useEffect, useLayoutEffect } from 'react';
+import React, {
+  useState,
+  MouseEventHandler,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+} from 'react';
 import Avatar from '@/app/_components/Avatar';
 import { formatDistanceToNow, sub } from 'date-fns';
 import {
@@ -15,6 +22,8 @@ import { FiMoreVertical } from 'react-icons/fi';
 import { useParams } from 'next/navigation';
 import { useAuthStore } from '@/app/_store/auth.store';
 import { useConversationStore } from '@/app/_store/conversation.store';
+import { BsChevronDoubleDown, BsChevronDown } from 'react-icons/bs';
+import { throttle } from 'lodash';
 
 const groupLogByUserBlock = (log: ConversationLogItem[]): ConversationLogItem[][] => {
   if (!log.length) {
@@ -41,8 +50,9 @@ export function Conversation() {
   const params = useParams();
   const chatboxRef = useRef<HTMLDivElement>(null);
   const { currentUser } = useAuthStore();
-  const { conversations, sendMessage } = useConversationStore();
+  const { conversations, sendMessage, updateMessagesSeenStatus } = useConversationStore();
   const [text, setText] = useState('');
+  const [shouldDisplayScrollButton, setShouldDisplayScrollButton] = useState(false);
   const justSentRef = useRef(false);
 
   const conversationId = Number(params.id);
@@ -54,6 +64,31 @@ export function Conversation() {
       justSentRef.current = false;
     }
   }, [conversation?.messages.length]);
+
+  // Scroll to bottom when the conversation is opened or everytime a new message is arrived
+  useEffect(() => {
+    if (chatboxRef.current && !shouldDisplayScrollButton) {
+      chatboxRef.current.scrollTo({ top: chatboxRef.current.scrollHeight });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation?.messages.length]);
+
+  const handleScrollUpdate = useMemo(
+    () =>
+      throttle((e) => {
+        const chatbox = chatboxRef.current;
+        if (chatbox) {
+          const bottomMostTop = chatbox.scrollHeight - chatbox.offsetHeight;
+          const lowThreshold = bottomMostTop - 100;
+          if (chatbox.scrollTop < lowThreshold) {
+            setShouldDisplayScrollButton(true);
+          } else {
+            setShouldDisplayScrollButton(false);
+          }
+        }
+      }, 100),
+    [],
+  );
 
   if (!conversation) {
     return;
@@ -76,6 +111,16 @@ export function Conversation() {
     if (text) {
       setText('');
       await sendMessageUtil(text);
+    }
+  };
+
+  const handleClickScrollToBottom: MouseEventHandler<HTMLElement> = (e) => {
+    chatboxRef.current?.scrollTo({ top: chatboxRef.current.scrollHeight });
+  };
+
+  const handleMessageInview = async (message: ConversationLogItem) => {
+    if (currentUser.id !== message.senderId && message.status === 'received') {
+      await updateMessagesSeenStatus(message.conversationId, [message]);
     }
   };
 
@@ -104,15 +149,32 @@ export function Conversation() {
         </div>
       </div>
       <div className="flex-1 flex flex-col min-h-0">
-        <div ref={chatboxRef} className="flex-1 min-h-0 overflow-y-auto py-4 space-y-7">
+        <div
+          ref={chatboxRef}
+          onScroll={handleScrollUpdate}
+          className="relative flex-1 min-h-0 overflow-x-hidden overflow-y-auto py-4 space-y-7"
+        >
           {groupLogByUserBlock(conversation.messages).map((block) => (
             <MessageBlock
+              onMessageInview={handleMessageInview}
               key={block[0].id}
               isSender={block[0].senderId === currentUser.id}
               log={block}
               sender={block[0].sender}
             />
           ))}
+          <button
+            style={{
+              display: shouldDisplayScrollButton ? '' : 'none',
+            }}
+            onClick={handleClickScrollToBottom}
+            className="sticky bottom-2 right-2 float-right btn btn-circle bg-primary text-white border-none hover:bg-primary ring ring-blue-300"
+          >
+            <BsChevronDoubleDown
+              className="animate-[wiggle-down_1s_ease-in-out_infinite]"
+              size={24}
+            />
+          </button>
         </div>
         <InputBar
           value={text}

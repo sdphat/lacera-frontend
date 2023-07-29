@@ -1,11 +1,12 @@
 import Avatar from '@/app/_components/Avatar';
-import { ReactionType } from '@/types/types';
+import { ConversationLogItem, ReactionType } from '@/types/types';
 import { cva } from 'class-variance-authority';
 import { formatDistanceToNow } from 'date-fns';
-import React, { MouseEventHandler, ReactElement, ReactNode } from 'react';
+import React, { MouseEventHandler, ReactElement, ReactNode, useEffect } from 'react';
 import { FiHeart, FiThumbsUp } from 'react-icons/fi';
 import { TbCheck, TbChecks } from 'react-icons/tb';
 import { hasOnlyOneEmoji } from '@/app/_lib/emoji';
+import { useInView } from 'react-intersection-observer';
 
 export type StatusType = 'sending' | 'sent' | 'received' | 'seen';
 
@@ -18,6 +19,7 @@ export interface MessageProps {
   status?: StatusType;
   postDate?: Date;
   className?: string;
+  onMessageInview?: () => void;
 }
 
 export interface MessageReactionProps {
@@ -74,9 +76,20 @@ const Message: React.FC<MessageProps> = ({
   postDate,
   className = '',
   isSender = false,
+  onMessageInview = () => {},
 }) => {
+  const { ref, inView } = useInView();
+
+  useEffect(() => {
+    if (inView) {
+      onMessageInview();
+    }
+  }, [inView, onMessageInview]);
   return (
-    <div className={`flex px-3 ${isSender ? 'justify-end' : 'justify-start'} ${className}`}>
+    <div
+      ref={ref}
+      className={`flex px-3 ${isSender ? 'justify-end' : 'justify-start'} ${className}`}
+    >
       {!isSender && (
         <div className="flex-none w-11 mr-2">{avatarUrl && <Avatar avatarUrl={avatarUrl} />}</div>
       )}
