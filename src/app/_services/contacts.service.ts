@@ -5,6 +5,8 @@ export const contactsSocket = socketInit({
   url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/contacts`,
 });
 
+contactsSocket.connect();
+
 export const getAllContacts = async () => {
   const contacts = await contactsSocket.emitWithAck('fetchAll');
   return contacts.data;

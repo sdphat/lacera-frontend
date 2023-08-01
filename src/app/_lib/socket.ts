@@ -4,6 +4,11 @@ import { refreshAccessToken } from '../_services/auth.service';
 
 type SocketEventListener<ReturnType = any> = (message: ReturnType) => void;
 
+/**
+ * Initialize a new socket. This socket is disconnected by default.
+ * @param options Socket options
+ * @returns Initialized socket, the socket is disconnected by default
+ */
 export const socketInit = ({
   url,
   socketConfig,
@@ -20,9 +25,26 @@ export const socketInit = ({
     },
     ...socketConfig,
   });
+  socket.disconnect();
 
   return {
     socket,
+
+    connect() {
+      socket.connect();
+    },
+
+    disconnect() {
+      socket.disconnect();
+    },
+
+    /**
+     * Disconnect and remove all listeners
+     */
+    reset() {
+      socket.disconnect();
+      socket.removeAllListeners();
+    },
 
     async emit(event: string, data?: object) {
       socket.emit(event, data);

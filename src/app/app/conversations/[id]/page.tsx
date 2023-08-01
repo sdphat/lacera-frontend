@@ -57,6 +57,7 @@ export function Conversation() {
 
   const conversationId = Number(params.id);
   let conversation = conversations.find((c) => c.id === conversationId);
+  console.log(conversation?.messages.filter((m) => m.status === 'received'));
 
   useEffect(() => {
     if (justSentRef.current) {

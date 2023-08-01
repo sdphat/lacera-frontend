@@ -6,7 +6,7 @@ import {
   getConversations,
   sendMessage,
 } from '../_services/chat.service';
-import { Conversation, ConversationType, Message } from '@/types/types';
+import { Conversation, Message } from '@/types/types';
 import { useAuthStore } from './auth.store';
 
 const updateConversationMessage = (conversations: Conversation[], message: Message) => {
@@ -25,12 +25,14 @@ const updateConversationMessage = (conversations: Conversation[], message: Messa
   return conversations;
 };
 
-let isIntialized = false;
-
-export const useConversationStore = create<{
+export interface ConversationStore {
   conversations: Conversation[];
+
   sendMessage: (sendMessageDto: SendMessageDto) => Promise<boolean>;
+
   init: () => Promise<any>;
+  reset: () => void;
+
   getConversation: (
     params:
       | {
@@ -44,8 +46,23 @@ export const useConversationStore = create<{
           targetId: number;
         },
   ) => Promise<Conversation | null>;
+
+  getConversations: () => Promise<void>;
+
   updateMessagesSeenStatus: (conversationId: number, messages: Message[]) => Promise<void>;
-}>()((set, get) => ({
+
+  createGroup: ({
+    name,
+    groupMemberIds,
+  }: {
+    name: string;
+    groupMemberIds: number[];
+  }) => Promise<Conversation>;
+}
+
+let isIntialized = false;
+
+export const useConversationStore = create<ConversationStore>()((set, get) => ({
   conversations: [],
   sendMessage: async (sendMessageDto: SendMessageDto) => {
     return sendMessage(sendMessageDto);
@@ -55,6 +72,7 @@ export const useConversationStore = create<{
       return;
     }
     isIntialized = true;
+    conversationSocket.connect();
     conversationSocket.addEventListener({
       successEvent: 'update',
       onSuccess: (message: Message) => {
@@ -76,9 +94,14 @@ export const useConversationStore = create<{
         set({ conversations });
       },
     });
-    const conversations = await getConversations();
-    set({ conversations: conversations ?? undefined });
   },
+
+  reset() {
+    isIntialized = false;
+    conversationSocket.reset();
+    set({ conversations: [] });
+  },
+
   async getConversation(params) {
     const { conversations } = get();
     const { currentUser } = useAuthStore.getState();
@@ -92,14 +115,14 @@ export const useConversationStore = create<{
       conversations.find(
         (c) =>
           c.type === 'private' &&
-          c.participants.every((p) => p.id === currentUser.id || p.id === params.targetId),
+          c.participants.every((p) => p.id === currentUser!.id || p.id === params.targetId),
       )
     ) {
       return (
         conversations.find(
           (c) =>
             c.type === 'private' &&
-            c.participants.every((p) => p.id === currentUser.id || p.id === params.targetId),
+            c.participants.every((p) => p.id === currentUser!.id || p.id === params.targetId),
         ) ?? null
       );
     }
@@ -110,6 +133,11 @@ export const useConversationStore = create<{
       return requestedConversation;
     }
     return null;
+  },
+
+  async getConversations() {
+    const conversations = (await getConversations()) ?? [];
+    set({ conversations });
   },
 
   async updateMessagesSeenStatus(conversationId: number, messages: Message[]) {
@@ -127,5 +155,17 @@ export const useConversationStore = create<{
       }
     });
     set({ conversations });
+  },
+
+  async createGroup({ name, groupMemberIds }) {
+    const response = await conversationSocket.emitWithAck('createGroup', {
+      title: name,
+      participantIds: groupMemberIds,
+    });
+    console.log(response);
+    const group = response.data;
+    const { conversations } = get();
+    set({ conversations: [...conversations, group] });
+    return group;
   },
 }));

@@ -18,6 +18,7 @@ export interface LoginResponsePayload {
   id: number;
   firstName: string;
   lastName: string;
+  avatarUrl: string;
   refreshToken: string;
 }
 

@@ -25,6 +25,8 @@ export const conversationSocket = socketInit({
   url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/conversation`,
 });
 
+conversationSocket.connect();
+
 export const sendMessage = async (sendMessageDto: SendMessageDto): Promise<boolean> => {
   const result = await conversationSocket.emitWithAck('createMessage', sendMessageDto);
   return Boolean(result.error);

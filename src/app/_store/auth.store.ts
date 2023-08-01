@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { LoginPayload, login } from '../_services/auth.service';
 
 export const useAuthStore = create<{
-  currentUser?: { id: number; firstName: string; lastName: string };
+  currentUser?: { id: number; firstName: string; lastName: string; avatarUrl: string };
   refreshToken: string;
   accessToken: string;
   login: (loginPayload: LoginPayload) => Promise<{ error: string } | undefined>;
@@ -19,6 +19,7 @@ export const useAuthStore = create<{
           return { error: response.data.error };
         } else {
           const { refreshToken, ...user } = response.data;
+          console.log(user);
           set({ refreshToken, currentUser: user });
         }
       },

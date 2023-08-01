@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
   acceptFriendRequest,
   cancelFriendRequest,
+  contactsSocket,
   getAllContacts,
   getContact,
   searchContacts,
@@ -10,11 +11,15 @@ import {
 import { Contact, ContactDetail } from '@/types/types';
 import { useAuthStore } from './auth.store';
 
-export const useContactsStore = create<{
+export interface ContactsStore {
   contacts: Contact[];
+
   getContacts: () => Promise<void>;
+
   searchContacts: ({ query }: { query: string }) => Promise<Contact[]>;
+
   getContact: (id: number) => Promise<ContactDetail>;
+
   sendFriendRequest: ({
     senderId,
     receiverId,
@@ -22,6 +27,7 @@ export const useContactsStore = create<{
     senderId: number;
     receiverId: number;
   }) => Promise<void>;
+
   rejectFriendRequest: ({
     senderId,
     receiverId,
@@ -29,6 +35,7 @@ export const useContactsStore = create<{
     senderId: number;
     receiverId: number;
   }) => Promise<void>;
+
   acceptFriendRequest: ({
     senderId,
     receiverId,
@@ -36,6 +43,7 @@ export const useContactsStore = create<{
     senderId: number;
     receiverId: number;
   }) => Promise<void>;
+
   cancelFriendRequest: ({
     senderId,
     receiverId,
@@ -43,31 +51,39 @@ export const useContactsStore = create<{
     senderId: number;
     receiverId: number;
   }) => Promise<void>;
-}>()((set, get) => ({
+}
+
+export const useContactsStore = create<ContactsStore>()((set, get) => ({
   contacts: [],
+
   async getContacts() {
     const contacts = await getAllContacts();
     set({ contacts });
   },
+
   async searchContacts(searchOptions) {
     const contacts = await searchContacts(searchOptions);
     return contacts;
   },
+
   async getContact(id) {
-    const userId = useAuthStore.getState().currentUser.id;
+    const userId = useAuthStore.getState().currentUser!.id;
     const contact = await getContact({ userId, contactId: id });
-    console.log(contact);
     return contact;
   },
+
   async sendFriendRequest({ senderId, receiverId }) {
     await sendFriendRequest({ senderId, receiverId });
   },
+
   async acceptFriendRequest({ senderId, receiverId }) {
     await acceptFriendRequest({ senderId, receiverId });
   },
+
   async cancelFriendRequest({ senderId, receiverId }) {
     await cancelFriendRequest({ senderId, receiverId });
   },
+
   async rejectFriendRequest({ senderId, receiverId }) {
     await this.rejectFriendRequest({ senderId, receiverId });
   },

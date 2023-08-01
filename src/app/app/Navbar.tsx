@@ -2,8 +2,10 @@ import Image from 'next/image';
 import React from 'react';
 import { FiLogOut, FiUser } from 'react-icons/fi';
 import { logout } from '../_services/auth.service';
+import { useAuthStore } from '../_store/auth.store';
 
 const Navbar = () => {
+  const { currentUser } = useAuthStore();
   return (
     <div className="navbar border-b-2 border-gray-200 min-h-0">
       <div className="flex-1 pl-2">
@@ -13,7 +15,7 @@ const Navbar = () => {
         <div className="dropdown dropdown-end">
           <label tabIndex={0} className="btn btn-ghost btn-circle avatar min-h-0 w-11 h-11">
             <div className="w-full rounded-full">
-              <Image alt="" width={24} height={24} src="/photo-1534528741775-53994a69daeb.jpg" />
+              <Image alt="" width={24} height={24} src={currentUser!.avatarUrl} />
             </div>
           </label>
           <ul
