@@ -68,7 +68,7 @@ const Sidebar: React.FC = () => {
     await updateMessagesSeenStatus(
       conversation.id,
       conversation.messages.filter(
-        (message) => currentUser!.id !== message.senderId && message.status === 'received',
+        (message) => currentUser.id !== message.senderId && message.status === 'received',
       ),
     );
   };
@@ -82,7 +82,7 @@ const Sidebar: React.FC = () => {
   }) => {
     await createGroup({
       name,
-      groupMemberIds: [currentUser!.id, ...groupMembers.map((c) => c.id)],
+      groupMemberIds: [currentUser.id, ...groupMembers.map((c) => c.id)],
     });
   };
 
@@ -99,7 +99,7 @@ const Sidebar: React.FC = () => {
         return (
           <ConversationMenuItemHOC
             conversation={conversation}
-            currentUserId={currentUser!.id}
+            currentUserId={currentUser.id}
             key={conversation.id}
             includeDivider={i !== searchResult.length - 1}
             onClick={makeClickConversationItemHandler(conversation)}
@@ -116,7 +116,7 @@ const Sidebar: React.FC = () => {
         return (
           <ConversationMenuItemHOC
             conversation={conversation}
-            currentUserId={currentUser!.id}
+            currentUserId={currentUser.id}
             key={conversation.id}
             includeDivider={i !== conversations.length - 1}
             onClick={makeClickConversationItemHandler(conversation)}

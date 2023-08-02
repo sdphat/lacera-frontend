@@ -58,6 +58,8 @@ export interface ConversationStore {
     name: string;
     groupMemberIds: number[];
   }) => Promise<Conversation>;
+
+  removeConversation: ({ conversationId }: { conversationId: number }) => Promise<void>;
 }
 
 let isIntialized = false;
@@ -115,14 +117,14 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
       conversations.find(
         (c) =>
           c.type === 'private' &&
-          c.participants.every((p) => p.id === currentUser!.id || p.id === params.targetId),
+          c.participants.every((p) => p.id === currentUser.id || p.id === params.targetId),
       )
     ) {
       return (
         conversations.find(
           (c) =>
             c.type === 'private' &&
-            c.participants.every((p) => p.id === currentUser!.id || p.id === params.targetId),
+            c.participants.every((p) => p.id === currentUser.id || p.id === params.targetId),
         ) ?? null
       );
     }
@@ -137,6 +139,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
 
   async getConversations() {
     const conversations = (await getConversations()) ?? [];
+    console.log(conversations);
     set({ conversations });
   },
 
@@ -162,10 +165,15 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
       title: name,
       participantIds: groupMemberIds,
     });
-    console.log(response);
     const group = response.data;
     const { conversations } = get();
     set({ conversations: [...conversations, group] });
     return group;
+  },
+
+  async removeConversation({ conversationId }) {
+    const response = await conversationSocket.emitWithAck('removeConversation', { conversationId });
+    const { conversations } = get();
+    set({ conversations: conversations.filter((c) => c.id !== conversationId) });
   },
 }));

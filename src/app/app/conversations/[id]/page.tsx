@@ -1,29 +1,18 @@
 'use client';
 
-import React, {
-  useState,
-  MouseEventHandler,
-  useRef,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-} from 'react';
+import React, { useState, MouseEventHandler, useRef, useEffect, useMemo } from 'react';
 import Avatar from '@/app/_components/Avatar';
-import { formatDistanceToNow, sub } from 'date-fns';
-import {
-  Conversation as ConversationType,
-  ConversationLogItem,
-  User,
-  GroupConversation,
-} from '@/types/types';
+import { formatDistanceToNow } from 'date-fns';
+import { ConversationLogItem, User, GroupConversation } from '@/types/types';
 import MessageBlock from './MessageBlock';
 import InputBar from './InputBar';
-import { FiMoreVertical } from 'react-icons/fi';
-import { useParams } from 'next/navigation';
+import { FiMoreVertical, FiTrash } from 'react-icons/fi';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/app/_store/auth.store';
 import { useConversationStore } from '@/app/_store/conversation.store';
-import { BsChevronDoubleDown, BsChevronDown } from 'react-icons/bs';
+import { BsChevronDoubleDown } from 'react-icons/bs';
 import { throttle } from 'lodash';
+import ConfirmDialog from '@/app/_components/ConfirmDialog';
 
 const groupLogByUserBlock = (log: ConversationLogItem[]): ConversationLogItem[][] => {
   if (!log.length) {
@@ -47,17 +36,19 @@ const groupLogByUserBlock = (log: ConversationLogItem[]): ConversationLogItem[][
 };
 
 export function Conversation() {
+  const router = useRouter();
   const params = useParams();
   const chatboxRef = useRef<HTMLDivElement>(null);
   const { currentUser } = useAuthStore();
-  const { conversations, sendMessage, updateMessagesSeenStatus } = useConversationStore();
+  const { conversations, sendMessage, updateMessagesSeenStatus, removeConversation } =
+    useConversationStore();
   const [text, setText] = useState('');
   const [shouldDisplayScrollButton, setShouldDisplayScrollButton] = useState(false);
+  const [shouldDisplayDeleteDialog, setShouldDisplayDeleteDialog] = useState(false);
   const justSentRef = useRef(false);
 
   const conversationId = Number(params.id);
   let conversation = conversations.find((c) => c.id === conversationId);
-  console.log(conversation?.messages.filter((m) => m.status === 'received'));
 
   useEffect(() => {
     if (justSentRef.current) {
@@ -94,6 +85,7 @@ export function Conversation() {
   if (!conversation) {
     return;
   }
+
   const isPrivateChat = conversation.type === 'private';
   const recipient = conversation.participants.find(
     (p: { id: number }) => p.id !== currentUser.id,
@@ -125,6 +117,20 @@ export function Conversation() {
     }
   };
 
+  const handleConfirmDelete = async () => {
+    setShouldDisplayDeleteDialog(false);
+    if (conversation) {
+      await removeConversation({ conversationId: conversation.id });
+      router.push('/app/conversations');
+    }
+    console.log('yea');
+  };
+
+  const handleCancelDelete = async () => {
+    setShouldDisplayDeleteDialog(false);
+    console.log('naw');
+  };
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex justify-between flex-none px-4 pt-4 pb-3 border-b-2 border-gray-200 w-full">
@@ -144,9 +150,22 @@ export function Conversation() {
           )}
         </div>
         <div className="flex-none">
-          <button className="btn btn-circle btn-ghost">
-            <FiMoreVertical size={22} />
-          </button>
+          <div className="dropdown dropdown-end">
+            <button tabIndex={0} className="btn btn-circle btn-ghost">
+              <FiMoreVertical size={22} />
+            </button>
+            <ul
+              tabIndex={0}
+              className="dropdown-content z-50 menu p-2 shadow bg-base-100 rounded-box w-52"
+            >
+              <li className="text-red-500">
+                <button onClick={() => setShouldDisplayDeleteDialog(true)}>
+                  <FiTrash size={20} />
+                  Delete conversation
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
       <div className="flex-1 flex flex-col min-h-0">
@@ -182,6 +201,13 @@ export function Conversation() {
           onChange={(e) => setText(e.target.value)}
           onSend={handleSendMessage}
           onThumbupClick={handleThumbupClick}
+        />
+        <ConfirmDialog
+          open={shouldDisplayDeleteDialog}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+          title="Delete Conversation"
+          message="This action is irreversable. Are you sure?"
         />
       </div>
     </div>

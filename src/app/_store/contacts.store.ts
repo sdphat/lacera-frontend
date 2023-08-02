@@ -67,7 +67,7 @@ export const useContactsStore = create<ContactsStore>()((set, get) => ({
   },
 
   async getContact(id) {
-    const userId = useAuthStore.getState().currentUser!.id;
+    const userId = useAuthStore.getState().currentUser.id;
     const contact = await getContact({ userId, contactId: id });
     return contact;
   },
