@@ -64,11 +64,19 @@ const Sidebar: React.FC = () => {
   const makeClickConversationItemHandler: (
     conversationId: Conversation,
   ) => React.MouseEventHandler<HTMLElement> = (conversation) => async (e) => {
+    if (!currentUser) {
+      return;
+    }
     router.push(`app/conversations/${conversation.id}`);
     await updateMessagesSeenStatus(
       conversation.id,
       conversation.messages.filter(
-        (message) => currentUser.id !== message.senderId && message.status === 'received',
+        (message) =>
+          currentUser.id !== message.senderId &&
+          (!message.messageUsers.length ||
+            message.messageUsers.some(
+              (mu) => mu.recipientId === currentUser.id && mu.status === 'received',
+            )),
       ),
     );
   };

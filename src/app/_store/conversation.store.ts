@@ -60,6 +60,8 @@ export interface ConversationStore {
   }) => Promise<Conversation>;
 
   removeConversation: ({ conversationId }: { conversationId: number }) => Promise<void>;
+
+  removeMessage: ({ messageId }: { messageId: number }) => Promise<void>;
 }
 
 let isIntialized = false;
@@ -107,6 +109,9 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
   async getConversation(params) {
     const { conversations } = get();
     const { currentUser } = useAuthStore.getState();
+    if (!currentUser) {
+      return null;
+    }
 
     if ('id' in params && conversations.find((c) => c.id === params.id)) {
       return conversations.find((c) => c.id === params.id) ?? null;
@@ -150,11 +155,22 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
       ),
     );
     const { conversations } = get();
+    const { currentUser } = useAuthStore.getState();
+    if (!currentUser) {
+      return;
+    }
     const localMessages = conversations.find((c) => c.id === conversationId)?.messages || [];
     messages.forEach((m) => {
       const foundLocalMessage = localMessages.find((lm) => lm.id === m.id);
       if (foundLocalMessage) {
-        foundLocalMessage.status = 'seen';
+        const messageUser = foundLocalMessage.messageUsers.find(
+          (mu) => (mu.recipientId = currentUser.id),
+        );
+        if (messageUser) {
+          messageUser.status = 'seen';
+        } else {
+          m.messageUsers.push({ recipientId: currentUser.id, status: 'seen' });
+        }
       }
     });
     set({ conversations });
@@ -175,5 +191,16 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     const response = await conversationSocket.emitWithAck('removeConversation', { conversationId });
     const { conversations } = get();
     set({ conversations: conversations.filter((c) => c.id !== conversationId) });
+  },
+
+  async removeMessage({ messageId }) {
+    const response = await conversationSocket.emit('softRemoveMessage', { messageId });
+    const { conversations } = get();
+    set({
+      conversations: conversations.map((conversation) => ({
+        ...conversation,
+        messages: conversation.messages.filter((m) => m.id !== messageId),
+      })),
+    });
   },
 }));

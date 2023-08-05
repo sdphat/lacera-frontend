@@ -3,7 +3,7 @@
 import React, { useState, MouseEventHandler, useRef, useEffect, useMemo } from 'react';
 import Avatar from '@/app/_components/Avatar';
 import { formatDistanceToNow } from 'date-fns';
-import { ConversationLogItem, User, GroupConversation } from '@/types/types';
+import { ConversationLogItem, User, GroupConversation, Message } from '@/types/types';
 import MessageBlock from './MessageBlock';
 import InputBar from './InputBar';
 import { FiMoreVertical, FiTrash } from 'react-icons/fi';
@@ -40,11 +40,18 @@ export function Conversation() {
   const params = useParams();
   const chatboxRef = useRef<HTMLDivElement>(null);
   const { currentUser } = useAuthStore();
-  const { conversations, sendMessage, updateMessagesSeenStatus, removeConversation } =
-    useConversationStore();
+  const {
+    conversations,
+    sendMessage,
+    updateMessagesSeenStatus,
+    removeConversation,
+    removeMessage,
+  } = useConversationStore();
   const [text, setText] = useState('');
   const [shouldDisplayScrollButton, setShouldDisplayScrollButton] = useState(false);
-  const [shouldDisplayDeleteDialog, setShouldDisplayDeleteDialog] = useState(false);
+  const [shouldDisplayDeleteConvDialog, setShouldDisplayDeleteConvDialog] = useState(false);
+  const [shouldDisplayDeleteMessDialog, setShouldDisplayDeleteMessDialog] = useState(false);
+  const [chosenMessage, setChosenMessage] = useState<Message>();
   const justSentRef = useRef(false);
 
   const conversationId = Number(params.id);
@@ -112,23 +119,51 @@ export function Conversation() {
   };
 
   const handleMessageInview = async (message: ConversationLogItem) => {
-    if (currentUser.id !== message.senderId && message.status === 'received') {
+    if (!currentUser) {
+      return;
+    }
+
+    if (
+      currentUser.id !== message.senderId &&
+      (!message.messageUsers.length ||
+        message.messageUsers.some(
+          (mu) => mu.recipientId === currentUser.id && mu.status === 'received',
+        ))
+    ) {
       await updateMessagesSeenStatus(message.conversationId, [message]);
     }
   };
 
-  const handleConfirmDelete = async () => {
-    setShouldDisplayDeleteDialog(false);
+  const handleConfirmDeleteConv = async () => {
+    setShouldDisplayDeleteConvDialog(false);
     if (conversation) {
       await removeConversation({ conversationId: conversation.id });
       router.push('/app/conversations');
     }
-    console.log('yea');
   };
 
-  const handleCancelDelete = async () => {
-    setShouldDisplayDeleteDialog(false);
-    console.log('naw');
+  const handleCancelDeleteConv = async () => {
+    setShouldDisplayDeleteConvDialog(false);
+  };
+
+  const handleDeleteMessage = async (message: Message) => {
+    setChosenMessage(message);
+    setShouldDisplayDeleteMessDialog(true);
+  };
+
+  const handleCancelDeleteMess = async () => {
+    setShouldDisplayDeleteMessDialog(false);
+    setChosenMessage(undefined);
+  };
+
+  const handleConfirmDeleteMess = async () => {
+    // Typesafe
+    if (!chosenMessage) {
+      return;
+    }
+
+    removeMessage({ messageId: chosenMessage.id });
+    setChosenMessage(undefined);
   };
 
   return (
@@ -159,7 +194,7 @@ export function Conversation() {
               className="dropdown-content z-50 menu p-2 shadow bg-base-100 rounded-box w-52"
             >
               <li className="text-red-500">
-                <button onClick={() => setShouldDisplayDeleteDialog(true)}>
+                <button onClick={() => setShouldDisplayDeleteConvDialog(true)}>
                   <FiTrash size={20} />
                   Delete conversation
                 </button>
@@ -181,6 +216,7 @@ export function Conversation() {
               isSender={block[0].senderId === currentUser.id}
               log={block}
               sender={block[0].sender}
+              onRemoveMessage={handleDeleteMessage}
             />
           ))}
           <button
@@ -203,11 +239,18 @@ export function Conversation() {
           onThumbupClick={handleThumbupClick}
         />
         <ConfirmDialog
-          open={shouldDisplayDeleteDialog}
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
+          open={shouldDisplayDeleteConvDialog}
+          onConfirm={handleConfirmDeleteConv}
+          onCancel={handleCancelDeleteConv}
           title="Delete Conversation"
           message="This action is irreversable. Are you sure?"
+        />
+        <ConfirmDialog
+          open={shouldDisplayDeleteMessDialog}
+          onConfirm={handleConfirmDeleteMess}
+          onCancel={handleCancelDeleteMess}
+          title="Delete Message"
+          message="Delete this message on your side. This action is irreversable. Are you sure?"
         />
       </div>
     </div>

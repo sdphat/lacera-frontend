@@ -7,6 +7,7 @@ export interface MessageBlockProps {
   sender: User;
   log: ConversationLogItem[];
   onMessageInview?: (message: ConversationLogItem) => void;
+  onRemoveMessage?: (message: ConversationLogItem) => void;
 }
 
 const MessageBlock: React.FC<MessageBlockProps> = ({
@@ -14,6 +15,7 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
   sender,
   log,
   onMessageInview = () => {},
+  onRemoveMessage = () => {},
 }) => (
   <div className={isSender ? 'space-y-1' : 'space-y-0.5'}>
     {log.map((item, idx) => (
@@ -25,6 +27,7 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
         postDate={item.createdAt}
         reactions={item.reactions}
         onMessageInview={() => onMessageInview(item)}
+        onRemoveMessage={() => onRemoveMessage(item)}
         title={idx === 0 ? `${sender.firstName} ${sender.lastName}` : undefined}
       />
     ))}

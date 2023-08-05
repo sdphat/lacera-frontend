@@ -3,10 +3,11 @@ import { ConversationLogItem, ReactionType } from '@/types/types';
 import { cva } from 'class-variance-authority';
 import { formatDistanceToNow } from 'date-fns';
 import React, { MouseEventHandler, ReactElement, ReactNode, useEffect } from 'react';
-import { FiHeart, FiThumbsUp } from 'react-icons/fi';
+import { FiHeart, FiThumbsUp, FiTrash } from 'react-icons/fi';
 import { TbCheck, TbChecks } from 'react-icons/tb';
 import { hasOnlyOneEmoji } from '@/app/_lib/emoji';
 import { useInView } from 'react-intersection-observer';
+import { BsReply, BsThreeDots, BsThreeDotsVertical } from 'react-icons/bs';
 
 export type StatusType = 'sending' | 'sent' | 'received' | 'seen';
 
@@ -20,6 +21,7 @@ export interface MessageProps {
   postDate?: Date;
   className?: string;
   onMessageInview?: () => void;
+  onRemoveMessage?: () => void;
 }
 
 export interface MessageReactionProps {
@@ -77,6 +79,7 @@ const Message: React.FC<MessageProps> = ({
   className = '',
   isSender = false,
   onMessageInview = () => {},
+  onRemoveMessage = () => {},
 }) => {
   const { ref, inView } = useInView();
 
@@ -85,53 +88,96 @@ const Message: React.FC<MessageProps> = ({
       onMessageInview();
     }
   }, [inView, onMessageInview]);
+
   return (
     <div
       ref={ref}
-      className={`flex px-3 ${isSender ? 'justify-end' : 'justify-start'} ${className}`}
+      className={`group flex px-3 ${isSender ? 'justify-end' : 'justify-start'} ${className}`}
     >
       {!isSender && (
         <div className="flex-none w-11 mr-2">{avatarUrl && <Avatar avatarUrls={avatarUrl} />}</div>
       )}
-      <div className="max-w-[85%]">
-        {hasOnlyOneEmoji(content) ? (
-          <div>
-            {emojiIconRecord[content.trim()] ?? <span className="text-6xl">{content.trim()}</span>}
-          </div>
-        ) : (
-          <div
-            className={messageContentClassNames({
-              state: status === 'sending' ? 'sending' : 'normal',
-              side: isSender ? 'sender' : 'recipient',
-            })}
-          >
+      <div
+        className={`
+          dropdown ${isSender ? 'dropdown-left' : 'dropdown-right'} 
+          relative block max-w-[85%]
+          
+        `}
+      >
+        <div>
+          {hasOnlyOneEmoji(content) ? (
             <div>
-              {title && <div className="font-semibold text-sm mb-0.5">{title}</div>}
-              <div>{content}</div>
-            </div>
-            <div className="flex justify-between items-center mt-2 empty:hidden">
-              {postDate && (
-                <time className="text-xs opacity-70">{formatDistanceToNow(postDate)} ago</time>
-              )}
-              {reactions && (
-                <div className="flex justify-end gap-1">
-                  {Object.entries(reactions).map(([reactionType, count]) => (
-                    <MessageReaction
-                      key={reactionType}
-                      icon={reactionTypeIconRecord[reactionType as ReactionType]}
-                      count={count}
-                    />
-                  ))}
-                </div>
+              {emojiIconRecord[content.trim()] ?? (
+                <span className="text-6xl">{content.trim()}</span>
               )}
             </div>
-          </div>
-        )}
-        {status && (
-          <div className="flex justify-end pr-1.5">
-            <div>{statusTypeIconRecord[status]}</div>
-          </div>
-        )}
+          ) : (
+            <div
+              className={messageContentClassNames({
+                state: status === 'sending' ? 'sending' : 'normal',
+                side: isSender ? 'sender' : 'recipient',
+              })}
+            >
+              <div>
+                {title && <div className="font-semibold text-sm mb-0.5">{title}</div>}
+                <div>{content}</div>
+              </div>
+              <div className="flex justify-between items-center mt-2 empty:hidden">
+                {postDate && (
+                  <time className="text-xs opacity-70">{formatDistanceToNow(postDate)} ago</time>
+                )}
+                {reactions && (
+                  <div className="flex justify-end gap-1">
+                    {Object.entries(reactions).map(([reactionType, count]) => (
+                      <MessageReaction
+                        key={reactionType}
+                        icon={reactionTypeIconRecord[reactionType as ReactionType]}
+                        count={count}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          {status && (
+            <div className="flex justify-end pr-1.5">
+              <div>{statusTypeIconRecord[status]}</div>
+            </div>
+          )}
+        </div>
+        <ul
+          className={`
+            hidden group-hover:flex absolute gap-1.5 w-max 
+            ${isSender ? 'right-[calc(100%+8px)]' : 'left-[calc(100%+8px)]'} 
+            top-[50%] translate-y-[-50%]`}
+        >
+          {/* Using labels instead of buttons so they won't open dropdown when being clicked */}
+          <li>
+            <label className="cursor-pointer">
+              <BsReply size={20} />
+            </label>
+          </li>
+          <li>
+            <label className="cursor-pointer" tabIndex={0}>
+              <BsThreeDots size={20} />
+            </label>
+          </li>
+        </ul>
+        <ul className="dropdown-content z-50 menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li className="text-red-500">
+            <button onClick={onRemoveMessage}>
+              <FiTrash size={20} />
+              Delete
+            </button>
+          </li>
+          <li className="text-red-500">
+            <button>
+              <FiTrash size={20} />
+              Retrieve
+            </button>
+          </li>
+        </ul>
       </div>
       {isSender && (
         <div className="flex-none w-11 ml-2">{avatarUrl && <Avatar avatarUrls={avatarUrl} />}</div>

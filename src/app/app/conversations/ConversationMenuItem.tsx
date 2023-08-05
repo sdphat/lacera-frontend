@@ -69,7 +69,14 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
 
   const amountOfUnreadMessages = conversation.messages.reduce(
     (count, message) =>
-      count + Number(currentUserId !== message.senderId && message.status === 'received'),
+      count +
+      Number(
+        currentUserId !== message.senderId &&
+          (!message.messageUsers.length ||
+            message.messageUsers.some(
+              (mu) => mu.recipientId === currentUserId && mu.status === 'received',
+            )),
+      ),
     0,
   );
 
