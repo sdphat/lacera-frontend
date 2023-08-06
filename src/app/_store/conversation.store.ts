@@ -62,6 +62,8 @@ export interface ConversationStore {
   removeConversation: ({ conversationId }: { conversationId: number }) => Promise<void>;
 
   removeMessage: ({ messageId }: { messageId: number }) => Promise<void>;
+
+  retrieveMessage: ({ messageId }: { messageId: number }) => Promise<void>;
 }
 
 let isIntialized = false;
@@ -194,7 +196,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
   },
 
   async removeMessage({ messageId }) {
-    const response = await conversationSocket.emit('softRemoveMessage', { messageId });
+    const response = await conversationSocket.emitWithAck('softRemoveMessage', { messageId });
     const { conversations } = get();
     set({
       conversations: conversations.map((conversation) => ({
@@ -202,5 +204,25 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
         messages: conversation.messages.filter((m) => m.id !== messageId),
       })),
     });
+  },
+
+  async retrieveMessage({ messageId }) {
+    const response = await conversationSocket.emitWithAck('removeMessage', { messageId });
+    const { data: updatedMessage } = response;
+    console.log(updatedMessage);
+    const { conversations } = get();
+    if (updatedMessage) {
+      set({
+        conversations: conversations.map((conversation) => ({
+          ...conversation,
+          messages: conversation.messages.map((message) => {
+            if (message.id === updatedMessage.id) {
+              return updatedMessage;
+            }
+            return message;
+          }),
+        })),
+      });
+    }
   },
 }));

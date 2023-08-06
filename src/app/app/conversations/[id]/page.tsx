@@ -46,11 +46,13 @@ export function Conversation() {
     updateMessagesSeenStatus,
     removeConversation,
     removeMessage,
+    retrieveMessage,
   } = useConversationStore();
   const [text, setText] = useState('');
   const [shouldDisplayScrollButton, setShouldDisplayScrollButton] = useState(false);
   const [shouldDisplayDeleteConvDialog, setShouldDisplayDeleteConvDialog] = useState(false);
   const [shouldDisplayDeleteMessDialog, setShouldDisplayDeleteMessDialog] = useState(false);
+  const [shouldDisplayRetrieveMessDialog, setShouldDisplayRetrieveMessDialog] = useState(false);
   const [chosenMessage, setChosenMessage] = useState<Message>();
   const justSentRef = useRef(false);
 
@@ -163,7 +165,27 @@ export function Conversation() {
     }
 
     removeMessage({ messageId: chosenMessage.id });
+    setShouldDisplayDeleteMessDialog(false);
     setChosenMessage(undefined);
+  };
+
+  const handleConfirmRetrieveMess = () => {
+    if (!chosenMessage) {
+      return;
+    }
+    retrieveMessage({ messageId: chosenMessage.id });
+    setShouldDisplayRetrieveMessDialog(false);
+    setChosenMessage(undefined);
+  };
+
+  const handleCancelRetrieveMess = () => {
+    setShouldDisplayRetrieveMessDialog(false);
+    setChosenMessage(undefined);
+  };
+
+  const handleRetrieveMessage = (message: Message) => {
+    setChosenMessage(message);
+    setShouldDisplayRetrieveMessDialog(true);
   };
 
   return (
@@ -217,6 +239,9 @@ export function Conversation() {
               log={block}
               sender={block[0].sender}
               onRemoveMessage={handleDeleteMessage}
+              onRetrieveMessage={handleRetrieveMessage}
+              // 2 min
+              retrievableDurationInSec={120}
             />
           ))}
           <button
@@ -251,6 +276,13 @@ export function Conversation() {
           onCancel={handleCancelDeleteMess}
           title="Delete Message"
           message="Delete this message on your side. This action is irreversable. Are you sure?"
+        />
+        <ConfirmDialog
+          open={shouldDisplayRetrieveMessDialog}
+          onConfirm={handleConfirmRetrieveMess}
+          onCancel={handleCancelRetrieveMess}
+          title="Retrieve Message"
+          message="Delete this message on both sides. This action is irreversable. Are you sure?"
         />
       </div>
     </div>

@@ -2,14 +2,14 @@ import Avatar from '@/app/_components/Avatar';
 import { ConversationLogItem, ReactionType } from '@/types/types';
 import { cva } from 'class-variance-authority';
 import { formatDistanceToNow } from 'date-fns';
-import React, { MouseEventHandler, ReactElement, ReactNode, useEffect } from 'react';
+import React, { MouseEventHandler, ReactElement, ReactNode, useEffect, useReducer } from 'react';
 import { FiHeart, FiThumbsUp, FiTrash } from 'react-icons/fi';
 import { TbCheck, TbChecks } from 'react-icons/tb';
 import { hasOnlyOneEmoji } from '@/app/_lib/emoji';
 import { useInView } from 'react-intersection-observer';
-import { BsReply, BsThreeDots, BsThreeDotsVertical } from 'react-icons/bs';
+import { BsReply, BsThreeDots } from 'react-icons/bs';
 
-export type StatusType = 'sending' | 'sent' | 'received' | 'seen';
+export type StatusType = 'sending' | 'sent' | 'received' | 'seen' | 'deleted';
 
 export interface MessageProps {
   isSender?: boolean;
@@ -18,10 +18,12 @@ export interface MessageProps {
   avatarUrl?: string;
   reactions?: Partial<Record<ReactionType, number>>;
   status?: StatusType;
-  postDate?: Date;
   className?: string;
+  postDate: Date;
+  retrievableDurationInSec: number;
   onMessageInview?: () => void;
   onRemoveMessage?: () => void;
+  onRetrieveMessage?: () => void;
 }
 
 export interface MessageReactionProps {
@@ -57,7 +59,7 @@ const reactionTypeIconRecord: Record<ReactionType, ReactElement> = {
   heart: <FiHeart size={16} className="fill-red-500 text-white" />,
 };
 
-const statusTypeIconRecord: Record<StatusType, ReactElement> = {
+const statusTypeIconRecord: Record<Exclude<StatusType, 'deleted'>, ReactElement> = {
   received: <TbCheck size={16} />,
   sent: <TbCheck className="text-success" size={16} />,
   seen: <TbChecks className="text-success" size={16} />,
@@ -78,16 +80,32 @@ const Message: React.FC<MessageProps> = ({
   postDate,
   className = '',
   isSender = false,
+  retrievableDurationInSec,
   onMessageInview = () => {},
   onRemoveMessage = () => {},
+  onRetrieveMessage = () => {},
 }) => {
   const { ref, inView } = useInView();
+  const [_, rerender] = useReducer((x) => x + 1, 0);
 
   useEffect(() => {
     if (inView) {
       onMessageInview();
     }
   }, [inView, onMessageInview]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      rerender();
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const isRetrievable = Date.now() - postDate.valueOf() <= retrievableDurationInSec * 1000;
+
+  if (status === 'deleted') {
+    return <div className="text-center text-gray-400 text-sm">{content}</div>;
+  }
 
   return (
     <div
@@ -141,7 +159,7 @@ const Message: React.FC<MessageProps> = ({
             </div>
           )}
           {status && (
-            <div className="flex justify-end pr-1.5">
+            <div className="absolute top-[100%] w-full flex justify-end pr-1.5">
               <div>{statusTypeIconRecord[status]}</div>
             </div>
           )}
@@ -171,12 +189,14 @@ const Message: React.FC<MessageProps> = ({
               Delete
             </button>
           </li>
-          <li className="text-red-500">
-            <button>
-              <FiTrash size={20} />
-              Retrieve
-            </button>
-          </li>
+          {isSender && isRetrievable && (
+            <li className="text-red-500">
+              <button onClick={onRetrieveMessage}>
+                <FiTrash size={20} />
+                Retrieve
+              </button>
+            </li>
+          )}
         </ul>
       </div>
       {isSender && (
