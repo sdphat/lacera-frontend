@@ -17,10 +17,10 @@ export type MessageRecipientStatus = 'received' | 'seen';
 
 export interface MessageRecipient {
   recipientId: number;
-  status: MessageRecipientStatus;
+  messageStatus: MessageRecipientStatus;
 }
 
-export type MessageStatus = 'deleted' | 'received';
+export type MessageStatus = 'deleted' | 'received' | 'sending' | 'sent';
 export interface Message {
   id: number;
   senderId: number;
@@ -32,6 +32,10 @@ export interface Message {
   updatedAt: Date;
   messageUsers: MessageRecipient[];
   status: MessageStatus;
+}
+
+export interface CreatedMessage extends Message {
+  tempId: number;
 }
 
 export interface ConversationLogItem extends Message {}

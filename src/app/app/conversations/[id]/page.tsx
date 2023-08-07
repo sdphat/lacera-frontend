@@ -13,27 +13,8 @@ import { useConversationStore } from '@/app/_store/conversation.store';
 import { BsChevronDoubleDown } from 'react-icons/bs';
 import { throttle } from 'lodash';
 import ConfirmDialog from '@/app/_components/ConfirmDialog';
-
-const groupLogByUserBlock = (log: ConversationLogItem[]): ConversationLogItem[][] => {
-  if (!log.length) {
-    return [];
-  }
-
-  const groupedLog: ConversationLogItem[][] = [];
-  let currentUserId = log[0].senderId;
-  let block: ConversationLogItem[] = [];
-  for (const item of log) {
-    if (item.senderId === currentUserId) {
-      block.push(item);
-    } else {
-      currentUserId = item.senderId;
-      groupedLog.push(block);
-      block = [item];
-    }
-  }
-  groupedLog.push(block);
-  return groupedLog;
-};
+import DeletedMessageNotification from './DeletedMessageNotification';
+import { groupLogByBlock } from "@/app/_lib/helper";
 
 export function Conversation() {
   const router = useRouter();
@@ -129,7 +110,7 @@ export function Conversation() {
       currentUser.id !== message.senderId &&
       (!message.messageUsers.length ||
         message.messageUsers.some(
-          (mu) => mu.recipientId === currentUser.id && mu.status === 'received',
+          (mu) => mu.recipientId === currentUser.id && mu.messageStatus === 'received',
         ))
     ) {
       await updateMessagesSeenStatus(message.conversationId, [message]);
@@ -231,19 +212,26 @@ export function Conversation() {
           onScroll={handleScrollUpdate}
           className="relative flex-1 min-h-0 overflow-x-hidden overflow-y-auto py-4 space-y-7"
         >
-          {groupLogByUserBlock(conversation.messages).map((block) => (
-            <MessageBlock
-              onMessageInview={handleMessageInview}
-              key={block[0].id}
-              isSender={block[0].senderId === currentUser.id}
-              log={block}
-              sender={block[0].sender}
-              onRemoveMessage={handleDeleteMessage}
-              onRetrieveMessage={handleRetrieveMessage}
-              // 2 min
-              retrievableDurationInSec={120}
-            />
-          ))}
+          {groupLogByBlock(conversation.messages).map((block) => {
+            if (block.type === 'messages') {
+              return (
+                <MessageBlock
+                  onMessageInview={handleMessageInview}
+                  key={block.id}
+                  isSender={block.senderId === currentUser!.id}
+                  log={block.messages}
+                  sender={block.sender}
+                  onRemoveMessage={handleDeleteMessage}
+                  onRetrieveMessage={handleRetrieveMessage}
+                  // 2 min
+                  retrievableDurationInSec={120}
+                />
+              );
+            }
+            if (block.type === 'deleted-notification') {
+              return <DeletedMessageNotification key={block.id} />;
+            }
+          })}
           <button
             style={{
               display: shouldDisplayScrollButton ? '' : 'none',

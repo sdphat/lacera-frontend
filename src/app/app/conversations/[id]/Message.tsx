@@ -9,7 +9,7 @@ import { hasOnlyOneEmoji } from '@/app/_lib/emoji';
 import { useInView } from 'react-intersection-observer';
 import { BsReply, BsThreeDots } from 'react-icons/bs';
 
-export type StatusType = 'sending' | 'sent' | 'received' | 'seen' | 'deleted';
+export type StatusType = 'sending' | 'sent' | 'received' | 'seen';
 
 export interface MessageProps {
   isSender?: boolean;
@@ -102,10 +102,6 @@ const Message: React.FC<MessageProps> = ({
   }, []);
 
   const isRetrievable = Date.now() - postDate.valueOf() <= retrievableDurationInSec * 1000;
-
-  if (status === 'deleted') {
-    return <div className="text-center text-gray-400 text-sm">{content}</div>;
-  }
 
   return (
     <div

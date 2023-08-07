@@ -6,7 +6,7 @@ import {
   getConversations,
   sendMessage,
 } from '../_services/chat.service';
-import { Conversation, Message } from '@/types/types';
+import { Conversation, ConversationLogItem, CreatedMessage, Message } from '@/types/types';
 import { useAuthStore } from './auth.store';
 
 const updateConversationMessage = (conversations: Conversation[], message: Message) => {
@@ -71,6 +71,38 @@ let isIntialized = false;
 export const useConversationStore = create<ConversationStore>()((set, get) => ({
   conversations: [],
   sendMessage: async (sendMessageDto: SendMessageDto) => {
+    const { conversations } = get();
+    const { currentUser } = useAuthStore.getState();
+
+    if (!currentUser) {
+      return false;
+    }
+
+    const nextTempId = Math.min(...conversations.flatMap((c) => c.messages).map((m) => m.id)) - 1;
+    set({
+      conversations: conversations.map((conv) => {
+        if (conv.id !== sendMessageDto.conversationId) {
+          return conv;
+        } else {
+          const tempMessage: ConversationLogItem = {
+            id: nextTempId,
+            createdAt: sendMessageDto.postDate,
+            content: sendMessageDto.content,
+            conversationId: sendMessageDto.conversationId,
+            messageUsers: [],
+            reactions: {},
+            updatedAt: new Date(),
+            status: 'sending',
+            senderId: currentUser.id,
+            sender: { ...currentUser, lastActive: new Date(), online: true },
+          };
+          return {
+            ...conv,
+            messages: [...conv.messages, tempMessage],
+          };
+        }
+      }),
+    });
     return sendMessage(sendMessageDto);
   },
   init: async () => {
@@ -92,12 +124,34 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
 
     conversationSocket.addEventListener({
       successEvent: 'create',
-      onSuccess: (message: Message) => {
+      onSuccess: (message: CreatedMessage) => {
         message.createdAt = new Date(message.createdAt);
         message.updatedAt = new Date(message.updatedAt);
         const { conversations } = get();
-        updateConversationMessage(conversations, message);
-        set({ conversations });
+        set({
+          conversations: conversations.map((conv) => {
+            if (conv.id !== message.conversationId) {
+              return conv;
+            }
+
+            const foundTempMessageIdx = conv.messages.findIndex((m) => m.id === message.tempId);
+            if (~foundTempMessageIdx) {
+              return conv;
+            }
+
+            console.log(message);
+
+            const copyMessages = conv.messages.concat();
+            message.createdAt = new Date(message.createdAt);
+            message.updatedAt = new Date(message.updatedAt);
+            copyMessages.splice(foundTempMessageIdx, 1, message);
+
+            return {
+              ...conv,
+              messages: copyMessages,
+            };
+          }),
+        });
       },
     });
   },
@@ -169,9 +223,9 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
           (mu) => (mu.recipientId = currentUser.id),
         );
         if (messageUser) {
-          messageUser.status = 'seen';
+          messageUser.messageStatus = 'seen';
         } else {
-          m.messageUsers.push({ recipientId: currentUser.id, status: 'seen' });
+          m.messageUsers.push({ recipientId: currentUser.id, messageStatus: 'seen' });
         }
       }
     });
