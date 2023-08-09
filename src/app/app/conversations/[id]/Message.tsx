@@ -63,7 +63,7 @@ const statusTypeIconRecord: Record<Exclude<StatusType, 'deleted'>, ReactElement>
   received: <TbCheck size={16} />,
   sent: <TbCheck className="text-success" size={16} />,
   seen: <TbChecks className="text-success" size={16} />,
-  sending: <span className="loading loading-spinner loading-xs opacity-50"></span>,
+  sending: <></>,
 };
 
 const emojiIconRecord: Record<string, ReactElement> = {
@@ -102,7 +102,6 @@ const Message: React.FC<MessageProps> = ({
   }, []);
 
   const isRetrievable = Date.now() - postDate.valueOf() <= retrievableDurationInSec * 1000;
-
   return (
     <div
       ref={ref}

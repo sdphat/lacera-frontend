@@ -6,6 +6,7 @@ import { useAuthStore } from '@/app/_store/auth.store';
 export interface MessageBlockProps {
   isSender: boolean;
   sender: User;
+  showLastMessageStatus: boolean;
   log: ConversationLogItem[];
   onMessageInview?: (message: ConversationLogItem) => void;
   onRemoveMessage?: (message: ConversationLogItem) => void;
@@ -15,6 +16,7 @@ export interface MessageBlockProps {
 
 const MessageBlock: React.FC<MessageBlockProps> = ({
   isSender,
+  showLastMessageStatus = false,
   sender,
   log,
   retrievableDurationInSec,
@@ -42,6 +44,19 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
         } else {
           status = item.status;
         }
+
+        let displayedStatus: undefined | StatusType = status;
+
+        if (status === 'sending') {
+          displayedStatus = 'sending';
+        } else {
+          if (showLastMessageStatus) {
+            displayedStatus = isSender ? status : undefined;
+          } else {
+            displayedStatus = undefined;
+          }
+        }
+
         return (
           <>
             <Message
@@ -55,7 +70,7 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
               onRemoveMessage={() => onRemoveMessage(item)}
               onRetrieveMessage={() => onRetrieveMessage(item)}
               title={idx === 0 ? `${sender.firstName} ${sender.lastName}` : undefined}
-              status={status}
+              status={displayedStatus}
               retrievableDurationInSec={retrievableDurationInSec}
             />
           </>

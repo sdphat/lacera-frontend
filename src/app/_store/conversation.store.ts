@@ -14,9 +14,7 @@ const updateConversationMessage = (conversations: Conversation[], message: Messa
   if (foundConversation) {
     const foundMessageIdx = foundConversation.messages.findIndex((m) => m.id === message.id);
     if (foundMessageIdx !== -1) {
-      if (foundConversation.messages[foundMessageIdx].updatedAt < message.updatedAt) {
-        foundConversation.messages[foundMessageIdx] = message;
-      }
+      foundConversation.messages[foundMessageIdx] = message;
     } else {
       foundConversation.messages.push(message);
     }
@@ -116,6 +114,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
       onSuccess: (message: Message) => {
         message.createdAt = new Date(message.createdAt);
         message.updatedAt = new Date(message.updatedAt);
+        console.log(message);
         const { conversations } = get();
         updateConversationMessage(conversations, message);
         set({ conversations });
@@ -138,8 +137,6 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
             if (~foundTempMessageIdx) {
               return conv;
             }
-
-            console.log(message);
 
             const copyMessages = conv.messages.concat();
             message.createdAt = new Date(message.createdAt);

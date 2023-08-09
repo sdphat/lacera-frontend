@@ -11,10 +11,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/app/_store/auth.store';
 import { useConversationStore } from '@/app/_store/conversation.store';
 import { BsChevronDoubleDown } from 'react-icons/bs';
-import { throttle } from 'lodash';
+import { countBy, throttle } from 'lodash';
 import ConfirmDialog from '@/app/_components/ConfirmDialog';
 import DeletedMessageNotification from './DeletedMessageNotification';
-import { groupLogByBlock } from "@/app/_lib/helper";
+import { groupLogByBlock } from '@/app/_lib/helper';
 
 export function Conversation() {
   const router = useRouter();
@@ -36,6 +36,8 @@ export function Conversation() {
   const [shouldDisplayRetrieveMessDialog, setShouldDisplayRetrieveMessDialog] = useState(false);
   const [chosenMessage, setChosenMessage] = useState<Message>();
   const justSentRef = useRef(false);
+
+  console.log(conversations);
 
   const conversationId = Number(params.id);
   let conversation = conversations.find((c) => c.id === conversationId);
@@ -72,7 +74,7 @@ export function Conversation() {
     [],
   );
 
-  if (!conversation) {
+  if (!conversation || !currentUser) {
     return;
   }
 
@@ -80,6 +82,12 @@ export function Conversation() {
   const recipient = conversation.participants.find(
     (p: { id: number }) => p.id !== currentUser.id,
   ) as User;
+
+  const blocks = groupLogByBlock(conversation.messages);
+  const messageBlockCount = blocks.reduce(
+    (count, block) => count + Number(block.type === 'messages'),
+    0,
+  );
 
   const sendMessageUtil = async (content: string) => {
     justSentRef.current = true;
@@ -169,6 +177,9 @@ export function Conversation() {
     setShouldDisplayRetrieveMessDialog(true);
   };
 
+  // For rendering
+  let currentMessageBlockIdx = 0;
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex justify-between flex-none px-4 pt-4 pb-3 border-b-2 border-gray-200 w-full">
@@ -212,8 +223,9 @@ export function Conversation() {
           onScroll={handleScrollUpdate}
           className="relative flex-1 min-h-0 overflow-x-hidden overflow-y-auto py-4 space-y-7"
         >
-          {groupLogByBlock(conversation.messages).map((block) => {
+          {blocks.map((block, i) => {
             if (block.type === 'messages') {
+              currentMessageBlockIdx++;
               return (
                 <MessageBlock
                   onMessageInview={handleMessageInview}
@@ -223,6 +235,7 @@ export function Conversation() {
                   sender={block.sender}
                   onRemoveMessage={handleDeleteMessage}
                   onRetrieveMessage={handleRetrieveMessage}
+                  showLastMessageStatus={currentMessageBlockIdx === messageBlockCount}
                   // 2 min
                   retrievableDurationInSec={120}
                 />
