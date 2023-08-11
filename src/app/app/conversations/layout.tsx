@@ -9,11 +9,8 @@ import { useConversationStore } from '@/app/_store/conversation.store';
 import { BsSearch } from 'react-icons/bs';
 import { AiOutlineUsergroupAdd } from 'react-icons/ai';
 import { debounce } from 'lodash';
-import { groupContactsByAlphabet } from '@/app/_lib/contacts';
 import { useContactsStore } from '@/app/_store/contacts.store';
-import Avatar from '@/app/_components/Avatar';
 import AddGroupModal from './AddGroupModal';
-import { getConversations } from '@/app/_services/chat.service';
 
 const Sidebar: React.FC = () => {
   const router = useRouter();
@@ -100,7 +97,7 @@ const Sidebar: React.FC = () => {
   }) => {
     await createGroup({
       name,
-      groupMemberIds: [currentUser.id, ...groupMembers.map((c) => c.id)],
+      groupMemberIds: [currentUser!.id, ...groupMembers.map((c) => c.id)],
     });
   };
 

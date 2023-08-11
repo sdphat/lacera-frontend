@@ -185,6 +185,7 @@ export function Conversation() {
         <div>
           {isPrivateChat ? (
             <Avatar
+              onAvatarClick={() => router.push(`/app/profile/${recipient.id}`)}
               avatarUrls={recipient.avatarUrl}
               title={`${recipient.firstName} ${recipient.lastName}`}
               subTitle={
@@ -231,6 +232,7 @@ export function Conversation() {
               currentMessageBlockIdx++;
               return (
                 <MessageBlock
+                  onAvatarClick={() => router.push(`/app/profile/${block.sender.id}`)}
                   onMessageInview={handleMessageInview}
                   key={block.id}
                   isSender={block.senderId === currentUser!.id}

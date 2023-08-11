@@ -47,6 +47,7 @@ const Search = () => {
                 onClick={() => router.push(`/app/profile/${contact.id}`)}
               >
                 <Avatar
+                  onAvatarClick={() => router.push(`/app/profile/${contact.id}`)}
                   avatarUrls={contact.avatarUrl}
                   title={`${contact.firstName} ${contact.lastName}`}
                   subTitle={`Active ${formatDistanceToNow(new Date(contact.lastActive))} ago`}

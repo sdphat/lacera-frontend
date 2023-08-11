@@ -11,6 +11,7 @@ export interface MessageBlockProps {
   onMessageInview?: (message: ConversationLogItem) => void;
   onRemoveMessage?: (message: ConversationLogItem) => void;
   onRetrieveMessage?: (message: ConversationLogItem) => void;
+  onAvatarClick?: () => void;
   retrievableDurationInSec: number;
 }
 
@@ -23,6 +24,7 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
   onMessageInview = () => {},
   onRemoveMessage = () => {},
   onRetrieveMessage = () => {},
+  onAvatarClick = () => {},
 }) => {
   const { currentUser } = useAuthStore();
   if (!currentUser) {
@@ -68,6 +70,7 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
             onMessageInview={() => onMessageInview(item)}
             onRemoveMessage={() => onRemoveMessage(item)}
             onRetrieveMessage={() => onRetrieveMessage(item)}
+            onAvatarClick={onAvatarClick}
             title={idx === 0 ? `${sender.firstName} ${sender.lastName}` : undefined}
             status={displayedStatus}
             retrievableDurationInSec={retrievableDurationInSec}

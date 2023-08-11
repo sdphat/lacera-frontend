@@ -24,6 +24,7 @@ export interface MessageProps {
   onMessageInview?: () => void;
   onRemoveMessage?: () => void;
   onRetrieveMessage?: () => void;
+  onAvatarClick?: () => void;
 }
 
 export interface MessageReactionProps {
@@ -84,6 +85,7 @@ const Message: React.FC<MessageProps> = ({
   onMessageInview = () => {},
   onRemoveMessage = () => {},
   onRetrieveMessage = () => {},
+  onAvatarClick = () => {},
 }) => {
   const { ref, inView } = useInView();
   const [_, rerender] = useReducer((x) => x + 1, 0);
@@ -108,7 +110,9 @@ const Message: React.FC<MessageProps> = ({
       className={`group flex px-3 ${isSender ? 'justify-end' : 'justify-start'} ${className}`}
     >
       {!isSender && (
-        <div className="flex-none w-11 mr-2">{avatarUrl && <Avatar avatarUrls={avatarUrl} />}</div>
+        <div className="flex-none w-11 mr-2">
+          {avatarUrl && <Avatar onAvatarClick={onAvatarClick} avatarUrls={avatarUrl} />}
+        </div>
       )}
       <div
         className={`
