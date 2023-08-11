@@ -6,6 +6,9 @@ import { useAuthStore } from '../_store/auth.store';
 
 const Navbar = () => {
   const { currentUser } = useAuthStore();
+  if (!currentUser) {
+    return;
+  }
   return (
     <div className="navbar border-b-2 border-gray-200 min-h-0">
       <div className="flex-1 pl-2">
@@ -20,7 +23,7 @@ const Navbar = () => {
           </label>
           <ul
             tabIndex={0}
-            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50"
           >
             <li className="hover:bg-white">
               <a>
