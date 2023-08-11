@@ -8,6 +8,7 @@ import {
 } from '../_services/chat.service';
 import { Conversation, ConversationLogItem, CreatedMessage, Message } from '@/types/types';
 import { useAuthStore } from './auth.store';
+import { getHeartbeat } from '../_services/user.service';
 
 const updateConversationMessage = (conversations: Conversation[], message: Message) => {
   const foundConversation = conversations.find((c) => c.id === message.conversationId);
@@ -62,6 +63,10 @@ export interface ConversationStore {
   removeMessage: ({ messageId }: { messageId: number }) => Promise<void>;
 
   retrieveMessage: ({ messageId }: { messageId: number }) => Promise<void>;
+
+  updateHeartbeat: ({ userId }: { userId: number }) => Promise<void>;
+
+  updateAllHeartbeats: () => Promise<void>;
 }
 
 let isIntialized = false;
@@ -260,7 +265,6 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
   async retrieveMessage({ messageId }) {
     const response = await conversationSocket.emitWithAck('removeMessage', { messageId });
     const { data: updatedMessage } = response;
-    console.log(updatedMessage);
     const { conversations } = get();
     if (updatedMessage) {
       set({
@@ -275,5 +279,59 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
         })),
       });
     }
+  },
+
+  async updateHeartbeat({ userId }) {
+    const response = await getHeartbeat(userId);
+    const { data: user } = response;
+    console.log(user);
+    const { conversations } = get();
+    if (user) {
+      set({
+        conversations: conversations.map((conversation) => {
+          const foundUser = conversation.participants.find((p) => p.id === user.userId);
+          if (foundUser) {
+            return {
+              ...conversation,
+              participants: conversation.participants
+                .filter((p) => p.id !== foundUser.id)
+                .concat({ ...foundUser, online: user.isOnline, lastActive: new Date() }),
+            };
+          } else {
+            return conversation;
+          }
+        }),
+      });
+    }
+  },
+
+  async updateAllHeartbeats() {
+    const { conversations } = get();
+    const participantIds = Array.from(
+      new Set(conversations.flatMap((c) => c.participants).map((p) => p.id)),
+    );
+    const responses: { data: { userId: number; isOnline: boolean } }[] = await Promise.all(
+      participantIds.map((userId) => getHeartbeat(userId)),
+    );
+    const users = responses.map((response) => response.data).filter((d) => d);
+
+    let updatedConversations = conversations.concat();
+    users.forEach((user) => {
+      updatedConversations = updatedConversations.map((conversation) => {
+        const foundUser = conversation.participants.find((p) => p.id === user.userId);
+        if (foundUser) {
+          return {
+            ...conversation,
+            participants: conversation.participants
+              .filter((p) => p.id !== foundUser.id)
+              .concat({ ...foundUser, online: user.isOnline, lastActive: new Date() }),
+          };
+        } else {
+          return conversation;
+        }
+      });
+    });
+
+    set({ conversations: updatedConversations });
   },
 }));

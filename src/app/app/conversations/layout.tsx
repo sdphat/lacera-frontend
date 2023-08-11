@@ -18,7 +18,8 @@ import { getConversations } from '@/app/_services/chat.service';
 const Sidebar: React.FC = () => {
   const router = useRouter();
   const { currentUser } = useAuthStore();
-  const { conversations, updateMessagesSeenStatus, createGroup } = useConversationStore();
+  const { conversations, updateMessagesSeenStatus, createGroup, updateAllHeartbeats } =
+    useConversationStore();
   const [searchText, setSearchText] = useState('');
   const [searchResult, setSearchResult] = useState<Conversation[]>([]);
   const { contacts, getContacts } = useContactsStore();
@@ -27,6 +28,15 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     getContacts();
   }, [getContacts]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+    const intervalId = setInterval(updateAllHeartbeats, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [currentUser, updateAllHeartbeats]);
 
   const searchConversation = useMemo(
     () =>
@@ -75,7 +85,7 @@ const Sidebar: React.FC = () => {
           currentUser.id !== message.senderId &&
           (!message.messageUsers.length ||
             message.messageUsers.some(
-              (mu) => mu.recipientId === currentUser.id && mu.status === 'received',
+              (mu) => mu.recipientId === currentUser.id && mu.messageStatus === 'received',
             )),
       ),
     );

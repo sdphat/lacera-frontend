@@ -58,22 +58,20 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
         }
 
         return (
-          <>
-            <Message
-              key={item.id}
-              avatarUrl={idx === 0 ? sender.avatarUrl : undefined}
-              content={item.content}
-              isSender={isSender}
-              postDate={item.createdAt}
-              reactions={item.reactions}
-              onMessageInview={() => onMessageInview(item)}
-              onRemoveMessage={() => onRemoveMessage(item)}
-              onRetrieveMessage={() => onRetrieveMessage(item)}
-              title={idx === 0 ? `${sender.firstName} ${sender.lastName}` : undefined}
-              status={displayedStatus}
-              retrievableDurationInSec={retrievableDurationInSec}
-            />
-          </>
+          <Message
+            key={item.id}
+            avatarUrl={idx === 0 ? sender.avatarUrl : undefined}
+            content={item.content}
+            isSender={isSender}
+            postDate={item.createdAt}
+            reactions={item.reactions}
+            onMessageInview={() => onMessageInview(item)}
+            onRemoveMessage={() => onRemoveMessage(item)}
+            onRetrieveMessage={() => onRetrieveMessage(item)}
+            title={idx === 0 ? `${sender.firstName} ${sender.lastName}` : undefined}
+            status={displayedStatus}
+            retrievableDurationInSec={retrievableDurationInSec}
+          />
         );
       })}
     </div>

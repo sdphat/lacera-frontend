@@ -74,7 +74,7 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
         currentUserId !== message.senderId &&
           (!message.messageUsers.length ||
             message.messageUsers.some(
-              (mu) => mu.recipientId === currentUserId && mu.status === 'received',
+              (mu) => mu.recipientId === currentUserId && mu.messageStatus === 'received',
             )),
       ),
     0,

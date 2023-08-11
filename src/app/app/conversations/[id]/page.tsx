@@ -28,6 +28,7 @@ export function Conversation() {
     removeConversation,
     removeMessage,
     retrieveMessage,
+    updateHeartbeat,
   } = useConversationStore();
   const [text, setText] = useState('');
   const [shouldDisplayScrollButton, setShouldDisplayScrollButton] = useState(false);
@@ -36,8 +37,6 @@ export function Conversation() {
   const [shouldDisplayRetrieveMessDialog, setShouldDisplayRetrieveMessDialog] = useState(false);
   const [chosenMessage, setChosenMessage] = useState<Message>();
   const justSentRef = useRef(false);
-
-  console.log(conversations);
 
   const conversationId = Number(params.id);
   let conversation = conversations.find((c) => c.id === conversationId);
@@ -188,7 +187,11 @@ export function Conversation() {
             <Avatar
               avatarUrls={recipient.avatarUrl}
               title={`${recipient.firstName} ${recipient.lastName}`}
-              subTitle={`Active ${formatDistanceToNow(recipient.lastActive)} ago`}
+              subTitle={
+                recipient.online
+                  ? 'Online'
+                  : `Active ${formatDistanceToNow(recipient.lastActive)} ago`
+              }
             />
           ) : (
             <Avatar
