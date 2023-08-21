@@ -1,4 +1,4 @@
-import { ConversationLogItem, MessageStatus, User } from '@/types/types';
+import { ConversationLogItem, ReactionType, User } from '@/types/types';
 import React from 'react';
 import Message, { StatusType } from './Message';
 import { useAuthStore } from '@/app/_store/auth.store';
@@ -12,6 +12,7 @@ export interface MessageBlockProps {
   onRemoveMessage?: (message: ConversationLogItem) => void;
   onRetrieveMessage?: (message: ConversationLogItem) => void;
   onAvatarClick?: () => void;
+  onReactToMessage?: (message: ConversationLogItem, reactionType: ReactionType) => void;
   retrievableDurationInSec: number;
 }
 
@@ -25,6 +26,7 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
   onRemoveMessage = () => {},
   onRetrieveMessage = () => {},
   onAvatarClick = () => {},
+  onReactToMessage = () => {},
 }) => {
   const { currentUser } = useAuthStore();
   if (!currentUser) {
@@ -70,6 +72,7 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
             onMessageInview={() => onMessageInview(item)}
             onRemoveMessage={() => onRemoveMessage(item)}
             onRetrieveMessage={() => onRetrieveMessage(item)}
+            onReactToMessage={(reactionType) => onReactToMessage(item, reactionType)}
             onAvatarClick={onAvatarClick}
             title={idx === 0 ? `${sender.firstName} ${sender.lastName}` : undefined}
             status={displayedStatus}

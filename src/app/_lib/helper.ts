@@ -1,4 +1,13 @@
-import { ConversationLogItem, User } from '@/types/types';
+import {
+  ConversationLogItem,
+  Message,
+  Reaction,
+  ReactionCount,
+  ReactionCountRecord,
+  ReactionType,
+  User,
+} from '@/types/types';
+import { groupBy } from 'lodash';
 
 interface DeletedMessageNotificationBlock {
   type: 'deleted-notification';
@@ -69,4 +78,22 @@ export const groupLogByBlock = (log: ConversationLogItem[]): LogBlock[] => {
   }
   commitBlock();
   return messageBlocks;
+};
+
+export const groupReactionByCount = (reactions: Reaction[]): ReactionCountRecord => {
+  if (!reactions) {
+    return {};
+  }
+
+  const reactionRecord = groupBy(reactions, (reaction) => reaction.type);
+  const reactionCountRecord: ReactionCountRecord = {};
+  for (const [type, reactions] of Object.entries(reactionRecord)) {
+    const reactionCount: ReactionCount = {
+      count: reactions.length,
+      type: type as ReactionType,
+    };
+    reactionCountRecord[type as ReactionType] = reactionCount;
+  }
+
+  return reactionCountRecord;
 };

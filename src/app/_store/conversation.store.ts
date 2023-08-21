@@ -4,9 +4,16 @@ import {
   conversationSocket,
   getConversation,
   getConversations,
+  reactToMessage,
   sendMessage,
 } from '../_services/chat.service';
-import { Conversation, ConversationLogItem, CreatedMessage, Message } from '@/types/types';
+import {
+  Conversation,
+  ConversationLogItem,
+  CreatedMessage,
+  Message,
+  ReactionType,
+} from '@/types/types';
 import { useAuthStore } from './auth.store';
 import { getHeartbeat } from '../_services/user.service';
 
@@ -19,7 +26,7 @@ const updateConversationMessage = (conversations: Conversation[], message: Messa
     } else {
       foundConversation.messages.push(message);
     }
-    foundConversation.messages.sort((m1, m2) => m1.createdAt.valueOf() - m2.createdAt.valueOf());
+    foundConversation.messages.sort((m1, m2) => m1.id - m2.id);
   }
   return conversations;
 };
@@ -48,7 +55,7 @@ export interface ConversationStore {
 
   getConversations: () => Promise<void>;
 
-  updateMessagesSeenStatus: (conversationId: number, messages: Message[]) => Promise<void>;
+  updateMessagesSeenStatus: (conversationId: number, messageIds: number[]) => Promise<void>;
 
   createGroup: ({
     name,
@@ -63,6 +70,14 @@ export interface ConversationStore {
   removeMessage: ({ messageId }: { messageId: number }) => Promise<void>;
 
   retrieveMessage: ({ messageId }: { messageId: number }) => Promise<void>;
+
+  reactToMessage: ({
+    messageId,
+    reactionType,
+  }: {
+    messageId: number;
+    reactionType: ReactionType;
+  }) => Promise<void>;
 
   updateHeartbeat: ({ userId }: { userId: number }) => Promise<void>;
 
@@ -87,13 +102,13 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
         if (conv.id !== sendMessageDto.conversationId) {
           return conv;
         } else {
-          const tempMessage: ConversationLogItem = {
+          const tempMessage: Message = {
             id: nextTempId,
             createdAt: sendMessageDto.postDate,
             content: sendMessageDto.content,
             conversationId: sendMessageDto.conversationId,
             messageUsers: [],
-            reactions: {},
+            reactions: [],
             updatedAt: new Date(),
             status: 'sending',
             senderId: currentUser.id,
@@ -206,10 +221,10 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     set({ conversations });
   },
 
-  async updateMessagesSeenStatus(conversationId: number, messages: Message[]) {
+  async updateMessagesSeenStatus(conversationId: number, messageIds: number[]) {
     await Promise.all(
-      messages.map(async (message) =>
-        conversationSocket.emitWithAck('updateMessageStatus', { messageId: message.id }),
+      messageIds.map(async (messageId) =>
+        conversationSocket.emitWithAck('updateMessageStatus', { messageId }),
       ),
     );
     const { conversations } = get();
@@ -218,16 +233,19 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
       return;
     }
     const localMessages = conversations.find((c) => c.id === conversationId)?.messages || [];
-    messages.forEach((m) => {
-      const foundLocalMessage = localMessages.find((lm) => lm.id === m.id);
+    messageIds.forEach((messageId) => {
+      const foundLocalMessage = localMessages.find((lm) => lm.id === messageId);
       if (foundLocalMessage) {
         const messageUser = foundLocalMessage.messageUsers.find(
-          (mu) => (mu.recipientId = currentUser.id),
+          (mu) => mu.recipientId === currentUser.id,
         );
         if (messageUser) {
           messageUser.messageStatus = 'seen';
         } else {
-          m.messageUsers.push({ recipientId: currentUser.id, messageStatus: 'seen' });
+          foundLocalMessage.messageUsers.push({
+            recipientId: currentUser.id,
+            messageStatus: 'seen',
+          });
         }
       }
     });
@@ -333,5 +351,13 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     });
 
     set({ conversations: updatedConversations });
+  },
+
+  async reactToMessage({ messageId, reactionType }) {
+    const message = await reactToMessage({ messageId, reactionType });
+    console.log(message);
+    if (!message) {
+      return;
+    }
   },
 }));

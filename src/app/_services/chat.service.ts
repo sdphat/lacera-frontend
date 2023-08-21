@@ -1,10 +1,15 @@
-import { Conversation, Message } from '@/types/types';
+import { Conversation, Message, ReactionType } from '@/types/types';
 import { socketInit } from '../_lib/socket';
 
 export interface SendMessageDto {
   conversationId: number;
   content: string;
   postDate: Date;
+}
+
+export interface ReactToMessageDto {
+  messageId: number;
+  reactionType: ReactionType;
 }
 
 /**
@@ -30,6 +35,25 @@ conversationSocket.connect();
 export const sendMessage = async (sendMessageDto: SendMessageDto): Promise<boolean> => {
   const result = await conversationSocket.emitWithAck('createMessage', sendMessageDto);
   return Boolean(result.error);
+};
+
+export const reactToMessage = async ({
+  messageId,
+  reactionType,
+}: ReactToMessageDto): Promise<Message | null> => {
+  const result: { error: string; data: Message } = await conversationSocket.emitWithAck(
+    'reactMessage',
+    {
+      messageId,
+      reactionType,
+    },
+  );
+  if (result.error) {
+    console.log(result.error);
+    return null;
+  }
+  console.log(result.data);
+  return result.data;
 };
 
 export const getConversations = async () => {

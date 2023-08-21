@@ -1,13 +1,20 @@
 import Avatar from '@/app/_components/Avatar';
-import { ConversationLogItem, ReactionType } from '@/types/types';
+import { ReactionType, ReactionCountRecord } from '@/types/types';
 import { cva } from 'class-variance-authority';
 import { formatDistanceToNow } from 'date-fns';
-import React, { MouseEventHandler, ReactElement, ReactNode, useEffect, useReducer } from 'react';
+import React, {
+  MouseEventHandler,
+  ReactElement,
+  ReactNode,
+  useEffect,
+  useReducer,
+  useState,
+} from 'react';
 import { FiHeart, FiThumbsUp, FiTrash } from 'react-icons/fi';
-import { TbCheck, TbChecks } from 'react-icons/tb';
+import { TbCheck, TbChecks, TbMoodPlus } from 'react-icons/tb';
 import { hasOnlyOneEmoji } from '@/app/_lib/emoji';
 import { useInView } from 'react-intersection-observer';
-import { BsReply, BsThreeDots } from 'react-icons/bs';
+import { BsHandThumbsUp, BsHeart, BsReply, BsThreeDots } from 'react-icons/bs';
 
 export type StatusType = 'sending' | 'sent' | 'received' | 'seen';
 
@@ -16,7 +23,7 @@ export interface MessageProps {
   title?: string;
   content: string;
   avatarUrl?: string;
-  reactions?: Partial<Record<ReactionType, number>>;
+  reactions?: ReactionCountRecord;
   status?: StatusType;
   className?: string;
   postDate: Date;
@@ -25,6 +32,7 @@ export interface MessageProps {
   onRemoveMessage?: () => void;
   onRetrieveMessage?: () => void;
   onAvatarClick?: () => void;
+  onReactToMessage?: (reactionType: ReactionType) => void;
 }
 
 export interface MessageReactionProps {
@@ -86,9 +94,11 @@ const Message: React.FC<MessageProps> = ({
   onRemoveMessage = () => {},
   onRetrieveMessage = () => {},
   onAvatarClick = () => {},
+  onReactToMessage = () => {},
 }) => {
   const { ref, inView } = useInView();
   const [_, rerender] = useReducer((x) => x + 1, 0);
+  const [shownPopupType, setShownPopupType] = useState<'options' | 'emojis' | ''>('');
 
   useEffect(() => {
     if (inView) {
@@ -109,11 +119,13 @@ const Message: React.FC<MessageProps> = ({
       ref={ref}
       className={`group flex px-3 ${isSender ? 'justify-end' : 'justify-start'} ${className}`}
     >
+      {/* Sender avatar */}
       {!isSender && (
         <div className="flex-none w-11 mr-2">
           {avatarUrl && <Avatar onAvatarClick={onAvatarClick} avatarUrls={avatarUrl} />}
         </div>
       )}
+      {/* Message body */}
       <div
         className={`
           dropdown ${isSender ? 'dropdown-left' : 'dropdown-right'} 
@@ -144,8 +156,8 @@ const Message: React.FC<MessageProps> = ({
                   <time className="text-xs opacity-70">{formatDistanceToNow(postDate)} ago</time>
                 )}
                 {reactions && (
-                  <div className="flex justify-end gap-1">
-                    {Object.entries(reactions).map(([reactionType, count]) => (
+                  <div className="flex justify-end gap-1 ml-6">
+                    {Object.entries(reactions).map(([reactionType, { count }]) => (
                       <MessageReaction
                         key={reactionType}
                         icon={reactionTypeIconRecord[reactionType as ReactionType]}
@@ -163,6 +175,7 @@ const Message: React.FC<MessageProps> = ({
             </div>
           )}
         </div>
+        {/* Message actions popup */}
         <ul
           className={`
             hidden group-hover:flex absolute gap-1.5 w-max 
@@ -176,28 +189,73 @@ const Message: React.FC<MessageProps> = ({
             </label>
           </li>
           <li>
-            <label className="cursor-pointer" tabIndex={0}>
+            <label
+              tabIndex={0}
+              onFocus={() => {
+                console.log('emoji');
+                setShownPopupType('emojis');
+              }}
+              className="cursor-pointer"
+            >
+              <TbMoodPlus size={20} />
+            </label>
+          </li>
+          <li>
+            <label
+              onFocus={() => setShownPopupType('options')}
+              className="cursor-pointer"
+              tabIndex={0}
+            >
               <BsThreeDots size={20} />
             </label>
           </li>
         </ul>
-        <ul className="dropdown-content z-50 menu p-2 shadow bg-base-100 rounded-box w-52">
-          <li className="text-red-500">
-            <button onClick={onRemoveMessage}>
-              <FiTrash size={20} />
-              Delete
-            </button>
-          </li>
-          {isSender && isRetrievable && (
+        {/* Options */}
+        {shownPopupType === 'options' && (
+          <ul className="dropdown-content z-50 menu p-2 shadow bg-base-100 rounded-box w-52">
             <li className="text-red-500">
-              <button onClick={onRetrieveMessage}>
+              <button onClick={onRemoveMessage}>
                 <FiTrash size={20} />
-                Retrieve
+                Delete
               </button>
             </li>
-          )}
-        </ul>
+            {isSender && isRetrievable && (
+              <li className="text-red-500">
+                <button onClick={onRetrieveMessage}>
+                  <FiTrash size={20} />
+                  Retrieve
+                </button>
+              </li>
+            )}
+          </ul>
+        )}
+
+        {/* Emoji selector */}
+        {shownPopupType === 'emojis' && (
+          <ul
+            className={`dropdown-content absolute flex shadow bg-base-100 py-2 px-3 rounded-md 
+              translate-x-2 !top-[50%] -translate-y-[50%] z-50 gap-3`}
+          >
+            <button
+              onClick={() => {
+                onReactToMessage('heart');
+                setShownPopupType('');
+              }}
+            >
+              <FiHeart className="hover:fill-red-500" />
+            </button>
+            <button
+              onClick={() => {
+                onReactToMessage('like');
+                setShownPopupType('');
+              }}
+            >
+              <FiThumbsUp className="hover:fill-primary" />
+            </button>
+          </ul>
+        )}
       </div>
+      {/* My avatar */}
       {isSender && (
         <div className="flex-none w-11 ml-2">{avatarUrl && <Avatar avatarUrls={avatarUrl} />}</div>
       )}

@@ -1,8 +1,15 @@
 export type ReactionType = 'like' | 'heart';
 export interface Reaction {
   type: ReactionType;
+  userId: number;
+}
+
+export interface ReactionCount {
+  type: ReactionType;
   count: number;
 }
+
+export type ReactionCountRecord = Partial<Record<ReactionType, ReactionCount>>;
 
 export interface User {
   id: number;
@@ -27,7 +34,7 @@ export interface Message {
   sender: User;
   conversationId: number;
   content: string;
-  reactions: Partial<Record<ReactionType, number>>;
+  reactions: Reaction[];
   createdAt: Date;
   updatedAt: Date;
   messageUsers: MessageRecipient[];
@@ -38,7 +45,9 @@ export interface CreatedMessage extends Message {
   tempId: number;
 }
 
-export interface ConversationLogItem extends Message {}
+export interface ConversationLogItem extends Omit<Message, 'reactions'> {
+  reactions: ReactionCountRecord;
+}
 
 export type ConversationType = 'private' | 'group';
 
@@ -48,7 +57,7 @@ export interface Conversation {
   chatBackground: string;
   avatar: string;
   participants: User[];
-  messages: ConversationLogItem[];
+  messages: Message[];
 }
 
 export interface PrivateConversation extends Conversation {

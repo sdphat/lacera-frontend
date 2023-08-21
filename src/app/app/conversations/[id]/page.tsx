@@ -3,7 +3,7 @@
 import React, { useState, MouseEventHandler, useRef, useEffect, useMemo } from 'react';
 import Avatar from '@/app/_components/Avatar';
 import { formatDistanceToNow } from 'date-fns';
-import { ConversationLogItem, User, GroupConversation, Message } from '@/types/types';
+import { ConversationLogItem, User, GroupConversation, ReactionType } from '@/types/types';
 import MessageBlock from './MessageBlock';
 import InputBar from './InputBar';
 import { FiMoreVertical, FiTrash } from 'react-icons/fi';
@@ -14,7 +14,7 @@ import { BsChevronDoubleDown } from 'react-icons/bs';
 import { countBy, throttle } from 'lodash';
 import ConfirmDialog from '@/app/_components/ConfirmDialog';
 import DeletedMessageNotification from './DeletedMessageNotification';
-import { groupLogByBlock } from '@/app/_lib/helper';
+import { groupLogByBlock, groupReactionByCount } from '@/app/_lib/helper';
 
 export function Conversation() {
   const router = useRouter();
@@ -28,14 +28,14 @@ export function Conversation() {
     removeConversation,
     removeMessage,
     retrieveMessage,
-    updateHeartbeat,
+    reactToMessage,
   } = useConversationStore();
   const [text, setText] = useState('');
   const [shouldDisplayScrollButton, setShouldDisplayScrollButton] = useState(false);
   const [shouldDisplayDeleteConvDialog, setShouldDisplayDeleteConvDialog] = useState(false);
   const [shouldDisplayDeleteMessDialog, setShouldDisplayDeleteMessDialog] = useState(false);
   const [shouldDisplayRetrieveMessDialog, setShouldDisplayRetrieveMessDialog] = useState(false);
-  const [chosenMessage, setChosenMessage] = useState<Message>();
+  const [chosenMessage, setChosenMessage] = useState<ConversationLogItem>();
   const justSentRef = useRef(false);
 
   const conversationId = Number(params.id);
@@ -82,7 +82,12 @@ export function Conversation() {
     (p: { id: number }) => p.id !== currentUser.id,
   ) as User;
 
-  const blocks = groupLogByBlock(conversation.messages);
+  const blocks = groupLogByBlock(
+    conversation.messages.map<ConversationLogItem>((message) => ({
+      ...message,
+      reactions: groupReactionByCount(message.reactions),
+    })),
+  );
   const messageBlockCount = blocks.reduce(
     (count, block) => count + Number(block.type === 'messages'),
     0,
@@ -120,7 +125,7 @@ export function Conversation() {
           (mu) => mu.recipientId === currentUser.id && mu.messageStatus === 'received',
         ))
     ) {
-      await updateMessagesSeenStatus(message.conversationId, [message]);
+      await updateMessagesSeenStatus(message.conversationId, [message.id]);
     }
   };
 
@@ -136,7 +141,7 @@ export function Conversation() {
     setShouldDisplayDeleteConvDialog(false);
   };
 
-  const handleDeleteMessage = async (message: Message) => {
+  const handleDeleteMessage = async (message: ConversationLogItem) => {
     setChosenMessage(message);
     setShouldDisplayDeleteMessDialog(true);
   };
@@ -171,9 +176,13 @@ export function Conversation() {
     setChosenMessage(undefined);
   };
 
-  const handleRetrieveMessage = (message: Message) => {
+  const handleRetrieveMessage = (message: ConversationLogItem) => {
     setChosenMessage(message);
     setShouldDisplayRetrieveMessDialog(true);
+  };
+
+  const handleReactToMessage = async (message: ConversationLogItem, reactionType: ReactionType) => {
+    await reactToMessage({ messageId: message.id, reactionType });
   };
 
   // For rendering
@@ -241,6 +250,7 @@ export function Conversation() {
                   onRemoveMessage={handleDeleteMessage}
                   onRetrieveMessage={handleRetrieveMessage}
                   showLastMessageStatus={currentMessageBlockIdx === messageBlockCount}
+                  onReactToMessage={handleReactToMessage}
                   // 2 min
                   retrievableDurationInSec={120}
                 />
