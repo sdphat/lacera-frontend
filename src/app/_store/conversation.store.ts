@@ -13,6 +13,7 @@ import {
   CreatedMessage,
   Message,
   ReactionType,
+  User,
 } from '@/types/types';
 import { useAuthStore } from './auth.store';
 import { getHeartbeat } from '../_services/user.service';
@@ -302,18 +303,22 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
   async updateHeartbeat({ userId }) {
     const response = await getHeartbeat(userId);
     const { data: user } = response;
-    console.log(user);
     const { conversations } = get();
     if (user) {
       set({
         conversations: conversations.map((conversation) => {
           const foundUser = conversation.participants.find((p) => p.id === user.userId);
           if (foundUser) {
+            let updatedUser: User = {
+              ...foundUser,
+              online: user.isOnline,
+              lastActive: user.isOnline ? new Date() : new Date(user.lastActive),
+            };
             return {
               ...conversation,
               participants: conversation.participants
                 .filter((p) => p.id !== foundUser.id)
-                .concat({ ...foundUser, online: user.isOnline, lastActive: new Date() }),
+                .concat(updatedUser),
             };
           } else {
             return conversation;
@@ -328,9 +333,8 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     const participantIds = Array.from(
       new Set(conversations.flatMap((c) => c.participants).map((p) => p.id)),
     );
-    const responses: { data: { userId: number; isOnline: boolean } }[] = await Promise.all(
-      participantIds.map((userId) => getHeartbeat(userId)),
-    );
+    const responses: { data: { userId: number; isOnline: boolean; lastActive: string } }[] =
+      await Promise.all(participantIds.map((userId) => getHeartbeat(userId)));
     const users = responses.map((response) => response.data).filter((d) => d);
 
     let updatedConversations = conversations.concat();
@@ -338,11 +342,16 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
       updatedConversations = updatedConversations.map((conversation) => {
         const foundUser = conversation.participants.find((p) => p.id === user.userId);
         if (foundUser) {
+          let updatedUser: User = {
+            ...foundUser,
+            online: user.isOnline,
+            lastActive: user.isOnline ? new Date() : new Date(user.lastActive),
+          };
           return {
             ...conversation,
             participants: conversation.participants
               .filter((p) => p.id !== foundUser.id)
-              .concat({ ...foundUser, online: user.isOnline, lastActive: new Date() }),
+              .concat(updatedUser),
           };
         } else {
           return conversation;

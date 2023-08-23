@@ -19,7 +19,6 @@ export const useAuthStore = create<{
           return { error: response.data.error };
         } else {
           const { refreshToken, ...user } = response.data;
-          console.log(user);
           set({ refreshToken, currentUser: user });
         }
       },

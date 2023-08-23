@@ -18,6 +18,7 @@ export const socketInit = ({
 }) => {
   const socket = io(url, {
     auth: async (cb) => {
+      console.log('AUTH!!');
       if (typeof window !== 'undefined') {
         const accessToken = await refreshAccessToken(getRefreshToken() as string);
         cb({ token: 'Bearer ' + accessToken });
