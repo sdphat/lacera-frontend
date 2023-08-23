@@ -10,12 +10,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    icon: <MdOutlineContactPage color="white" size={24} />,
+    icon: <MdOutlineContactPage color="white" size={20} />,
     text: 'Contacts',
     href: '/app/contacts',
   },
   {
-    icon: <MdChatBubble color="white" size={24} />,
+    icon: <MdChatBubble color="white" size={20} />,
     text: 'Conversations',
     href: '/app/conversations',
   },
@@ -24,10 +24,10 @@ const navItems: NavItem[] = [
 const Sidebar = () => {
   return (
     <div>
-      <div className="menu bg-blue-400 w-56 h-full">
+      <div className="menu bg-blue-400 w-44 h-full">
         {navItems.map((item) => (
           <li key={item.text} className="text-white">
-            <Link className="py-2.5 text-base" href={item.href}>
+            <Link className="py-2.5 text-sm" href={item.href}>
               {item.icon} {item.text}
             </Link>
           </li>

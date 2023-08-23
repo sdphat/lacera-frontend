@@ -7,7 +7,7 @@ import { useAuthStore } from '../_store/auth.store';
 const Navbar = () => {
   const { currentUser } = useAuthStore();
   if (!currentUser) {
-    return;
+    return null;
   }
   return (
     <div className="navbar border-b-2 border-gray-200 min-h-0">

@@ -77,14 +77,16 @@ const Sidebar: React.FC = () => {
     router.push(`app/conversations/${conversation.id}`);
     await updateMessagesSeenStatus(
       conversation.id,
-      conversation.messages.filter(
-        (message) =>
-          currentUser.id !== message.senderId &&
-          (!message.messageUsers.length ||
-            message.messageUsers.some(
-              (mu) => mu.recipientId === currentUser.id && mu.messageStatus === 'received',
-            )),
-      ),
+      conversation.messages
+        .filter(
+          (message) =>
+            currentUser.id !== message.senderId &&
+            (!message.messageUsers.length ||
+              message.messageUsers.some(
+                (mu) => mu.recipientId === currentUser.id && mu.messageStatus === 'received',
+              )),
+        )
+        .map((m) => m.id),
     );
   };
 
@@ -142,14 +144,14 @@ const Sidebar: React.FC = () => {
   );
 
   return (
-    <div className="menu w-80 py-4 h-full overflow-y-auto flex-nowrap border-r-2 border-gray-200">
+    <div className="menu w-[17rem] py-4 h-full overflow-y-auto flex-nowrap border-r-2 border-gray-200">
       <div className="flex items-center">
         <div className="relative">
           <input
             onChange={handleChange}
             value={searchText}
             type="text"
-            className="input input-bordered focus:outline-none w-full pr-12"
+            className="input input-bordered focus:outline-none w-full pr-12 text-sm"
             placeholder="Search in conversations"
           />
           <div className="absolute right-3 top-[50%] translate-y-[-50%] flex gap-2">

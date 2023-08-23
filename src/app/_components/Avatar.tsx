@@ -79,8 +79,8 @@ const Avatar: React.FC<AvatarProps> = ({
           </div>
         </div>
         <div className="flex-1 min-w-0 ml-2">
-          <div className="font-bold">{title}</div>
-          <div className="text-gray-500 text-sm overflow-ellipsis whitespace-nowrap overflow-hidden mt-0.5">
+          <div className="font-bold text-sm">{title}</div>
+          <div className="text-gray-500 text-[0.85rem] overflow-ellipsis whitespace-nowrap overflow-hidden mt-0.5">
             {subTitle}
           </div>
         </div>

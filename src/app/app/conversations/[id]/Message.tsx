@@ -148,8 +148,8 @@ const Message: React.FC<MessageProps> = ({
               })}
             >
               <div>
-                {title && <div className="font-semibold text-sm mb-0.5">{title}</div>}
-                <div>{content}</div>
+                {title && <div className="font-semibold text-[0.8rem] mb-0.5">{title}</div>}
+                <div className="text-sm">{content}</div>
               </div>
               <div className="flex justify-between items-center mt-2 empty:hidden">
                 {postDate && (
