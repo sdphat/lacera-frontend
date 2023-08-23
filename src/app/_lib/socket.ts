@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
 import { getRefreshToken } from './auth';
 import { refreshAccessToken } from '../_services/auth.service';
+import { useAuthStore } from '../_store/auth.store';
 
 type SocketEventListener<ReturnType = any> = (message: ReturnType) => void;
 
@@ -18,10 +19,13 @@ export const socketInit = ({
 }) => {
   const socket = io(url, {
     auth: async (cb) => {
-      console.log('AUTH!!');
       if (typeof window !== 'undefined') {
-        const accessToken = await refreshAccessToken(getRefreshToken() as string);
-        cb({ token: 'Bearer ' + accessToken });
+        try {
+          const accessToken = await refreshAccessToken(getRefreshToken() as string);
+          cb({ token: 'Bearer ' + accessToken });
+        } catch (ex) {
+          useAuthStore.setState({ refreshToken: '', currentUser: undefined });
+        }
       }
     },
     ...socketConfig,
@@ -60,7 +64,8 @@ export const socketInit = ({
           socket.connect();
           const tryAgainResult = await socket.emitWithAck(event, data);
           if ('error' in tryAgainResult && tryAgainResult.error === 'unauthorized') {
-            return { error: 'return to login page...' };
+            useAuthStore.setState({ refreshToken: '', currentUser: undefined });
+            return { error: 'unauthorized' };
           }
           return tryAgainResult;
         }

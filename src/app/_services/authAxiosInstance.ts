@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getAccessToken, getRefreshToken, setAccessToken } from '../_lib/auth';
 import { refreshAccessToken } from './auth.service';
+import { useAuthStore } from '../_store/auth.store';
 
 // Create an instance of Axios
 const api = axios.create({
@@ -35,11 +36,13 @@ api.interceptors.response.use(
           return api(originalRequest);
         } catch (refreshError) {
           // Handle token refresh error, e.g., redirect to login page
-          throw refreshError;
+          useAuthStore.setState({ refreshToken: '', currentUser: undefined });
+          // throw refreshError;
         }
       } else {
         // Handle missing refresh token, e.g., redirect to login page
-        throw new Error('Refresh token not found');
+        useAuthStore.setState({ refreshToken: '', currentUser: undefined });
+        // throw new Error('Refresh token not found');
       }
     }
     return Promise.reject(error);
