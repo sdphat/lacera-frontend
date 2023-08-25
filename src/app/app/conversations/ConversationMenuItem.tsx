@@ -72,6 +72,7 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
       count +
       Number(
         currentUserId !== message.senderId &&
+          message.content !== 'This message has been retrieved' &&
           (!message.messageUsers.length ||
             message.messageUsers.some(
               (mu) => mu.recipientId === currentUserId && mu.messageStatus === 'received',

@@ -84,6 +84,7 @@ export const getConversation = async (params: { id: number } | { targetId: numbe
         targetId: params.targetId,
       },
     );
+    console.log(error, createdPrivateConversation);
     if (error) {
       return null;
     }

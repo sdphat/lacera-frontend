@@ -30,6 +30,30 @@ export async function login(loginPayload: LoginPayload) {
   return response;
 }
 
+export interface RegisterPayload {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  password: string;
+}
+
+export interface RegisterResponsePayload {
+  id: number;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string;
+  refreshToken: string;
+}
+
+export type RegisterResponseErrorType = 'existed';
+
+export async function register(registerPayload: RegisterPayload) {
+  const response = await api.post<
+    ResponsePayload<RegisterResponsePayload, RegisterResponseErrorType>
+  >('auth/register', registerPayload);
+  return response;
+}
+
 export async function logout() {
   const response = await authApi.post<ResponsePayload>('auth/logout');
   removeAllTokens();

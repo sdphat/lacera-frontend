@@ -1,13 +1,11 @@
 'use client';
 
 import React, { ChangeEventHandler, useState } from 'react';
-import { MdLockOutline, MdSmartphone } from 'react-icons/md';
+import { MdLockOutline, MdPerson, MdSmartphone } from 'react-icons/md';
 import bg from '/public/auth_background.png';
-import { Metadata } from 'next';
 import { useForm } from 'react-hook-form';
 import PhoneNumberSelector from '../_components/PhoneNumberSelector';
 import { cva } from 'class-variance-authority';
-import { login } from '../_services/auth.service';
 import { getCountryCallingCode } from 'libphonenumber-js';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../_store/auth.store';
@@ -26,31 +24,33 @@ const submitButtonClasses = cva('btn btn-primary w-full max-w-sm', {
   },
 });
 
-const Login = () => {
+const Register = () => {
   const {
-    register,
+    register: registerField,
     handleSubmit,
     setValue,
     trigger,
     setError,
     formState: { isValid, isSubmitting, errors },
   } = useForm({ mode: 'onChange' });
-  const { login } = useAuthStore();
   const [countryCode, setCountryCode] = useState('VN');
   const router = useRouter();
+  const { register } = useAuthStore();
   const submitButtonState = !isValid ? 'invalid' : isSubmitting ? 'submitting' : 'valid';
 
   const onSubmit = handleSubmit(async (data) => {
-    const response = await login({
+    const response = await register({
+      firstName: data.firstName,
+      lastName: data.lastName,
       phoneNumber: `+${getCountryCallingCode(countryCode as any)}${data.phoneNumber}`,
       password: data.password,
     });
 
     if (response) {
-      if (response.error === 'mismatch') {
-        setError('root.mismatch', {
-          type: 'mismatch',
-          message: 'Username or password is incorrect. Please check again.',
+      if (response.error === 'existed') {
+        setError('root.existed', {
+          type: 'existed',
+          message: 'This phone number is already registered. Please check again.',
         });
       }
     } else {
@@ -85,7 +85,35 @@ const Login = () => {
           <div className="card card-normal bg-base-100 shadow-xl mt-20 w-full max-w-lg">
             <div className="px-4 md:px-12 pb-7 pt-7">
               <form onSubmit={onSubmit}>
-                <div className="form-control w-full">
+                {/* Name */}
+                <div className="flex gap-4">
+                  <div className="form-control w-full">
+                    <label className="input-group">
+                      <span>
+                        <MdPerson size={16} />
+                      </span>
+                      <input
+                        placeholder="First name"
+                        className={inputClasses}
+                        {...registerField('firstName', { required: true, minLength: 1 })}
+                      />
+                    </label>
+                  </div>
+                  <div className="form-control w-full">
+                    <label className="input-group">
+                      <span>
+                        <MdPerson size={16} />
+                      </span>
+                      <input
+                        placeholder="Last name"
+                        className={inputClasses}
+                        {...registerField('lastName', { required: true, minLength: 1 })}
+                      />
+                    </label>
+                  </div>
+                </div>
+                {/* Phone number */}
+                <div className="form-control w-full mt-4">
                   <label className="input-group">
                     <span>
                       <MdSmartphone size={16} />
@@ -99,7 +127,7 @@ const Login = () => {
                       type="tel"
                       placeholder="Phone number"
                       className={inputClasses}
-                      {...register('phoneNumber', {
+                      {...registerField('phoneNumber', {
                         required: true,
                         minLength: 4,
                       })}
@@ -107,6 +135,7 @@ const Login = () => {
                     />
                   </label>
                 </div>
+                {/* Password */}
                 <div className="form-control w-full mt-4">
                   <label className="input-group">
                     <span>
@@ -116,13 +145,31 @@ const Login = () => {
                       type="password"
                       placeholder="Password"
                       className={inputClasses}
-                      {...register('password', { required: true, minLength: 8 })}
+                      {...registerField('password', { required: true, minLength: 8 })}
                     />
                   </label>
                 </div>
-                {errors.root?.mismatch && (
+                {/* Password confirm */}
+                <div className="form-control w-full mt-4">
+                  <label className="input-group">
+                    <span>
+                      <MdLockOutline size={16} />
+                    </span>
+                    <input
+                      type="password"
+                      placeholder="Confirm password"
+                      className={inputClasses}
+                      {...registerField('passwordConfirm', {
+                        required: true,
+                        minLength: 8,
+                        validate: (confirmPassword, { password }) => confirmPassword === password,
+                      })}
+                    />
+                  </label>
+                </div>
+                {errors.root?.existed && (
                   <div className="text-error text-sm w-full mt-1">
-                    {errors.root.mismatch.message}
+                    {errors.root.existed.message}
                   </div>
                 )}
                 <div className="flex flex-col items-center mt-8">
@@ -137,13 +184,12 @@ const Login = () => {
                         submitButtonState === 'submitting' ? 'loading loading-spinner' : ''
                       }
                     ></span>
-                    {!isSubmitting && 'Login'}
+                    {!isSubmitting && 'Register'}
                   </button>
-                  <a className="link link-primary text-sm mt-4">Forgot password?</a>
-                  <div className="text-sm mt-8">
-                    New to platform?{' '}
-                    <Link href="/register" className="link link-primary">
-                      Make an account
+                  <div className="text-sm mt-4">
+                    Already have an acount?{' '}
+                    <Link href="/login" className="link link-primary">
+                      Sign in now
                     </Link>
                   </div>
                 </div>
@@ -156,4 +202,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;

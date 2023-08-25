@@ -49,26 +49,28 @@ const Profile = () => {
   }, [getContact, id]);
 
   const handleSendFriendRequest = useCallback(async () => {
+    if (!currentUser) return;
     await sendFriendRequest({ senderId: currentUser.id, receiverId: Number(id) });
     setContact({ ...contact, status: 'pendingRequest' } as ContactDetail);
-  }, [contact, currentUser.id, id, sendFriendRequest]);
+  }, [contact, currentUser, id, sendFriendRequest]);
 
   const handleCancelFriendRequest = useCallback(async () => {
-    console.log('cancelling...');
+    if (!currentUser) return;
     await cancelFriendRequest({ senderId: currentUser.id, receiverId: Number(id) });
-    console.log('cancelled');
     setContact({ ...contact, status: 'notAdded' } as ContactDetail);
-  }, [cancelFriendRequest, contact, currentUser.id, id]);
+  }, [cancelFriendRequest, contact, currentUser, id]);
 
   const handleRejectFriendRequest = useCallback(async () => {
+    if (!currentUser) return;
     await rejectFriendRequest({ senderId: currentUser.id, receiverId: Number(id) });
     setContact({ ...contact, status: 'rejected' } as ContactDetail);
-  }, [contact, currentUser.id, id, rejectFriendRequest]);
+  }, [contact, currentUser, id, rejectFriendRequest]);
 
   const handleAcceptFriendRequest = useCallback(async () => {
+    if (!currentUser) return;
     await acceptFriendRequest({ senderId: currentUser.id, receiverId: Number(id) });
     setContact({ ...contact, status: 'accepted' } as ContactDetail);
-  }, [contact, currentUser.id, id, acceptFriendRequest]);
+  }, [currentUser, acceptFriendRequest, id, contact]);
 
   const friendButtonRecord: Record<
     string,
@@ -147,7 +149,7 @@ const Profile = () => {
             {contact.firstName} {contact.lastName}
           </div>
           <div className="flex gap-4 mt-3">
-            {contact.id !== currentUser.id && (
+            {contact.id !== currentUser!.id && (
               <>
                 <button onClick={handleClickFriendBtn} className="btn">
                   {FriendBtnIcon}
