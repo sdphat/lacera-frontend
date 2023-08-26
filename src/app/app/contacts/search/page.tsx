@@ -33,31 +33,35 @@ const Search = () => {
 
   let resultElement: React.ReactNode;
 
-  if (!searchResult.length) {
-    resultElement = <h2 className="text-3xl font-bold">No result found</h2>;
+  if (!query) {
+    resultElement = null;
   } else {
-    resultElement = (
-      <div>
-        <h2 className="text-3xl font-bold">Search result</h2>
-        <div className="flex flex-wrap mt-12 gap-y-6">
-          {searchResult.map((contact) => (
-            <div key={contact.id} className="w-[33%]">
-              <div
-                className="max-w-full w-max"
-                onClick={() => router.push(`/app/profile/${contact.id}`)}
-              >
-                <Avatar
-                  onAvatarClick={() => router.push(`/app/profile/${contact.id}`)}
-                  avatarUrls={contact.avatarUrl}
-                  title={`${contact.firstName} ${contact.lastName}`}
-                  subTitle={`Active ${formatDistanceToNow(new Date(contact.lastActive))} ago`}
-                />
+    if (!searchResult.length) {
+      resultElement = <h2 className="text-3xl font-bold">No result found</h2>;
+    } else {
+      resultElement = (
+        <div>
+          <h2 className="text-3xl font-bold">Search result</h2>
+          <div className="flex flex-wrap mt-12 gap-y-6">
+            {searchResult.map((contact) => (
+              <div key={contact.id} className="w-[33%]">
+                <div
+                  className="max-w-full w-max"
+                  onClick={() => router.push(`/app/profile/${contact.id}`)}
+                >
+                  <Avatar
+                    onAvatarClick={() => router.push(`/app/profile/${contact.id}`)}
+                    avatarUrls={contact.avatarUrl}
+                    title={`${contact.firstName} ${contact.lastName}`}
+                    subTitle={`Active ${formatDistanceToNow(new Date(contact.lastActive))} ago`}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   return (
