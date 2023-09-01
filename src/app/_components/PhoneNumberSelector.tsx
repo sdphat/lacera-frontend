@@ -39,7 +39,7 @@ const PhoneNumberSelector: React.FC<PhoneNumberSelectorProps> = ({ countryCode, 
       </label>
       <ul
         tabIndex={0}
-        className="dropdown-content max-h-64 overflow-y-scroll flex-nowrap menu p-2 shadow bg-base-100 w-52"
+        className="dropdown-content max-h-64 overflow-y-scroll flex-nowrap menu p-2 shadow bg-base-100 w-52 z-40"
       >
         {countryCodes
           .filter((code) => isSupportedCountry(code))

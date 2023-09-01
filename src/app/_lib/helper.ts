@@ -97,3 +97,8 @@ export const groupReactionByCount = (reactions: Reaction[]): ReactionCountRecord
 
   return reactionCountRecord;
 };
+
+// File size is in bytes
+// 1 MB = 1^6 bytes
+export const validateMaxFileSize = (file: File, maxSizeInMb: number) =>
+  file.size <= maxSizeInMb * 1000000;

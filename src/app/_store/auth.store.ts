@@ -7,6 +7,9 @@ import {
   login,
   register,
 } from '../_services/auth.service';
+import api from '../_services/authAxiosInstance';
+import { User } from '@/types/types';
+import { ProfileData } from '../app/profile/[id]/ProfileEditModal';
 
 export const useAuthStore = create<{
   currentUser?: { id: number; firstName: string; lastName: string; avatarUrl: string };
@@ -16,6 +19,7 @@ export const useAuthStore = create<{
   register: (
     registerPayload: RegisterPayload,
   ) => Promise<{ error: RegisterResponseErrorType } | undefined>;
+  updateProfile: (updateProfilePayload: ProfileData) => Promise<User>;
 }>()(
   persist(
     (set, get) => ({
@@ -39,6 +43,27 @@ export const useAuthStore = create<{
         }
         const { refreshToken, ...user } = response.data;
         set({ refreshToken, currentUser: user });
+      },
+
+      async updateProfile(updateProfilePayload) {
+        const { data: updatedUser } = await api.postForm<User>(
+          '/user/update-profile',
+          updateProfilePayload,
+        );
+        const { currentUser } = get();
+        // Type safe
+        if (!currentUser) {
+          return updatedUser;
+        }
+        set({
+          currentUser: {
+            ...currentUser,
+            firstName: updatedUser.firstName,
+            lastName: updatedUser.lastName,
+            avatarUrl: updatedUser.avatarUrl,
+          },
+        });
+        return updatedUser;
       },
     }),
 

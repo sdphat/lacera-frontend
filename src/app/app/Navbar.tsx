@@ -3,6 +3,7 @@ import React from 'react';
 import { FiLogOut, FiUser } from 'react-icons/fi';
 import { logout } from '../_services/auth.service';
 import { useAuthStore } from '../_store/auth.store';
+import Link from 'next/link';
 
 const Navbar = () => {
   const { currentUser } = useAuthStore();
@@ -26,10 +27,10 @@ const Navbar = () => {
             className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50"
           >
             <li className="hover:bg-white">
-              <a>
+              <Link href={`/app/profile/${currentUser.id}`}>
                 <FiUser size={20} />
                 Profile
-              </a>
+              </Link>
             </li>
             <li>
               <button onClick={logout}>

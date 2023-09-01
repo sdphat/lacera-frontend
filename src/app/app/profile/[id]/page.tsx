@@ -22,10 +22,13 @@ import {
 import { useContactsStore } from '@/app/_store/contacts.store';
 import { useParams, useRouter } from 'next/navigation';
 import { ContactDetail } from '@/types/types';
-import Link from 'next/link';
 import { useConversationStore } from '@/app/_store/conversation.store';
+import { FiEdit } from 'react-icons/fi';
+import ProfileEditModal, { ProfileData } from './ProfileEditModal';
+import api from '@/app/_services/authAxiosInstance';
 
 const Profile = () => {
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [contact, setContact] = useState<ContactDetail>();
   const {
     getContact,
@@ -35,10 +38,30 @@ const Profile = () => {
     sendFriendRequest,
   } = useContactsStore();
 
-  const { currentUser } = useAuthStore();
+  const { currentUser, updateProfile } = useAuthStore();
   const { getConversation } = useConversationStore();
   const { id } = useParams();
   const router = useRouter();
+  const [profileEditInitialValues, setProfileEditInitialValues] = useState<Partial<ProfileData>>(
+    {},
+  );
+
+  useEffect(() => {
+    async function initProfileEditValues() {
+      if (!contact || contact?.id !== currentUser!.id) {
+        return;
+      }
+      setProfileEditInitialValues({
+        avatar: contact.avatarUrl,
+        background: contact.backgroundUrl,
+        description: contact.aboutMe,
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+      });
+    }
+
+    initProfileEditValues();
+  }, [contact, currentUser]);
 
   useEffect(() => {
     const f = async () => {
@@ -113,6 +136,13 @@ const Profile = () => {
     }
   };
 
+  const handleSaveEditProfile = async (data: ProfileData) => {
+    await updateProfile(data);
+    const c = await getContact(Number(id));
+    setContact(c);
+    setEditProfileOpen(false);
+  };
+
   if (!contact) {
     return null;
   }
@@ -146,28 +176,43 @@ const Profile = () => {
         </div>
         <div className="mt-2 ml-6">
           <div className="font-bold text-2xl">
-            {contact.firstName} {contact.lastName}
-          </div>
-          <div className="flex gap-4 mt-3">
-            {contact.id !== currentUser!.id && (
-              <>
-                <button onClick={handleClickFriendBtn} className="btn">
-                  {FriendBtnIcon}
-                  {friendBtnText}
-                </button>
-                <button onClick={handleClickChat} className="btn btn-primary">
-                  <BsChatDots className="w-5 h-5" /> Chat
-                </button>
-              </>
+            {contact.firstName} {contact.lastName}{' '}
+            {contact.id === currentUser!.id && (
+              <button
+                onClick={() => setEditProfileOpen(true)}
+                className="btn btn-ghost btn-circle hover:bg-transparent"
+              >
+                <FiEdit size={18} />
+              </button>
             )}
-            <button className="btn">
-              <BsThreeDots className="w-6 h-6" />
-            </button>
           </div>
+          {contact.id !== currentUser!.id && (
+            <div className="flex gap-4 mt-3">
+              <button onClick={handleClickFriendBtn} className="btn">
+                {FriendBtnIcon}
+                {friendBtnText}
+              </button>
+              <button onClick={handleClickChat} className="btn btn-primary">
+                <BsChatDots className="w-5 h-5" /> Chat
+              </button>
+              <button className="btn">
+                <BsThreeDots className="w-6 h-6" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <div className="divider"></div>
       <div>{contact.aboutMe}</div>
+      {contact.id === currentUser!.id && (
+        <ProfileEditModal
+          initialValues={profileEditInitialValues}
+          key={String(editProfileOpen)}
+          onClose={() => setEditProfileOpen(false)}
+          onSave={handleSaveEditProfile}
+          open={editProfileOpen}
+        />
+      )}
     </div>
   );
 };
