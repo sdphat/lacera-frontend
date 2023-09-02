@@ -5,6 +5,7 @@ export interface SendMessageDto {
   conversationId: number;
   content: string;
   postDate: Date;
+  replyTo?: number;
 }
 
 export interface ReactToMessageDto {

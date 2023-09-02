@@ -36,6 +36,8 @@ export function Conversation() {
   const [shouldDisplayDeleteMessDialog, setShouldDisplayDeleteMessDialog] = useState(false);
   const [shouldDisplayRetrieveMessDialog, setShouldDisplayRetrieveMessDialog] = useState(false);
   const [chosenMessage, setChosenMessage] = useState<ConversationLogItem>();
+  const [replyMessage, setReplyMessage] = useState<ConversationLogItem>();
+  const [focusedMessageId, setFocusMessageId] = useState<number>();
   const justSentRef = useRef(false);
 
   const conversationId = Number(params.id);
@@ -93,19 +95,30 @@ export function Conversation() {
     0,
   );
 
-  const sendMessageUtil = async (content: string) => {
+  const sendMessageResetState = async ({
+    content,
+    replyTo,
+  }: {
+    content: string;
+    replyTo?: number;
+  }) => {
     justSentRef.current = true;
-    await sendMessage({ content, conversationId, postDate: new Date() });
+    setReplyMessage(undefined);
+    setFocusMessageId(undefined);
+    await sendMessage({ content, replyTo, conversationId, postDate: new Date() });
   };
 
   const handleThumbupClick: MouseEventHandler<HTMLElement> = async (e) => {
-    await sendMessageUtil('👍');
+    await sendMessageResetState({ content: '👍' });
   };
 
   const handleSendMessage: MouseEventHandler<HTMLElement> = async (e) => {
     if (text) {
       setText('');
-      await sendMessageUtil(text);
+      await sendMessageResetState({
+        content: text,
+        replyTo: replyMessage ? replyMessage.id : undefined,
+      });
     }
   };
 
@@ -185,6 +198,20 @@ export function Conversation() {
     await reactToMessage({ messageId: message.id, reactionType });
   };
 
+  const handleReplyToMessage = (message: ConversationLogItem) => {
+    setReplyMessage(message);
+  };
+
+  const handleReplyMessageClick = () => {
+    if (!conversation || !replyMessage) return;
+    setFocusMessageId(replyMessage.id);
+  };
+
+  const handleReplyMessageRemove = () => {
+    setReplyMessage(undefined);
+    setFocusMessageId(undefined);
+  };
+
   // For rendering
   let currentMessageBlockIdx = 0;
 
@@ -251,6 +278,8 @@ export function Conversation() {
                   onRetrieveMessage={handleRetrieveMessage}
                   showLastMessageStatus={currentMessageBlockIdx === messageBlockCount}
                   onReactToMessage={handleReactToMessage}
+                  onReplyToMessage={handleReplyToMessage}
+                  focusedMessageId={focusedMessageId}
                   // 2 min
                   retrievableDurationInSec={120}
                 />
@@ -274,10 +303,13 @@ export function Conversation() {
           </button>
         </div>
         <InputBar
+          replyTo={replyMessage}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onSend={handleSendMessage}
           onThumbupClick={handleThumbupClick}
+          onReplyMessageClick={() => handleReplyMessageClick()}
+          onReplyMessageRemove={() => handleReplyMessageRemove()}
         />
         <ConfirmDialog
           open={shouldDisplayDeleteConvDialog}

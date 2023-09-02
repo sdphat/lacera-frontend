@@ -39,14 +39,19 @@ export interface Message {
   updatedAt: Date;
   messageUsers: MessageRecipient[];
   status: MessageStatus;
+  replyTo: Message;
 }
 
 export interface CreatedMessage extends Message {
   tempId: number;
 }
 
-export interface ConversationLogItem extends Omit<Message, 'reactions'> {
+/**
+ * Display friendly version of message
+ */
+export interface ConversationLogItem extends Omit<Message, 'reactions' | 'replyTo'> {
   reactions: ReactionCountRecord;
+  replyTo: ConversationLogItem;
 }
 
 export type ConversationType = 'private' | 'group';

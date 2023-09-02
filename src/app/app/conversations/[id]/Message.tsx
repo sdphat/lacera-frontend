@@ -1,5 +1,5 @@
 import Avatar from '@/app/_components/Avatar';
-import { ReactionType, ReactionCountRecord } from '@/types/types';
+import { ReactionType, ReactionCountRecord, ConversationLogItem } from '@/types/types';
 import { cva } from 'class-variance-authority';
 import { formatDistanceToNow } from 'date-fns';
 import React, {
@@ -8,13 +8,14 @@ import React, {
   ReactNode,
   useEffect,
   useReducer,
+  useRef,
   useState,
 } from 'react';
 import { FiHeart, FiThumbsUp, FiTrash } from 'react-icons/fi';
 import { TbCheck, TbChecks, TbMoodPlus } from 'react-icons/tb';
 import { hasOnlyOneEmoji } from '@/app/_lib/emoji';
 import { useInView } from 'react-intersection-observer';
-import { BsHandThumbsUp, BsHeart, BsReply, BsThreeDots } from 'react-icons/bs';
+import { BsHandThumbsUp, BsHeart, BsQuote, BsReply, BsThreeDots } from 'react-icons/bs';
 
 export type StatusType = 'sending' | 'sent' | 'received' | 'seen';
 
@@ -27,12 +28,15 @@ export interface MessageProps {
   status?: StatusType;
   className?: string;
   postDate: Date;
+  isFocused?: boolean;
+  replyTo?: ConversationLogItem;
   retrievableDurationInSec: number;
   onMessageInview?: () => void;
   onRemoveMessage?: () => void;
   onRetrieveMessage?: () => void;
   onAvatarClick?: () => void;
   onReactToMessage?: (reactionType: ReactionType) => void;
+  onReplyClick?: () => void;
 }
 
 export interface MessageReactionProps {
@@ -52,6 +56,9 @@ const messageContentClassNames = cva(
       side: {
         sender: 'justify-self-end bg-blue-400 text-white pl-4 pr-2',
         recipient: 'justify-self-start bg-base-100 text-black pr-4 pl-2',
+      },
+      focus: {
+        true: 'bg-secondary text-gray-200',
       },
     },
   },
@@ -89,16 +96,20 @@ const Message: React.FC<MessageProps> = ({
   postDate,
   className = '',
   isSender = false,
+  isFocused = false,
   retrievableDurationInSec,
+  replyTo,
   onMessageInview = () => {},
   onRemoveMessage = () => {},
   onRetrieveMessage = () => {},
   onAvatarClick = () => {},
   onReactToMessage = () => {},
+  onReplyClick = () => {},
 }) => {
-  const { ref, inView } = useInView();
+  const { ref: inViewRef, inView } = useInView();
   const [_, rerender] = useReducer((x) => x + 1, 0);
   const [shownPopupType, setShownPopupType] = useState<'options' | 'emojis' | ''>('');
+  const [element, setElement] = useState<HTMLElement>();
 
   useEffect(() => {
     if (inView) {
@@ -113,10 +124,20 @@ const Message: React.FC<MessageProps> = ({
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    if (!element) return;
+    if (isFocused) {
+      element.scrollIntoView();
+    }
+  }, [element, isFocused]);
+
   const isRetrievable = Date.now() - postDate.valueOf() <= retrievableDurationInSec * 1000;
   return (
     <div
-      ref={ref}
+      ref={(e) => {
+        inViewRef(e);
+        setElement(e as HTMLElement);
+      }}
       className={`group flex px-3 ${isSender ? 'justify-end' : 'justify-start'} ${className}`}
     >
       {/* Sender avatar */}
@@ -145,8 +166,19 @@ const Message: React.FC<MessageProps> = ({
               className={messageContentClassNames({
                 state: status === 'sending' ? 'sending' : 'normal',
                 side: isSender ? 'sender' : 'recipient',
+                focus: isFocused,
               })}
             >
+              {replyTo && (
+                <div className="relative rounded-md px-4 py-2 border border-gray-200 w-64 bg-gray-100 cursor-pointer text-sm text-gray-500 mb-3">
+                  <div className="font-bold text-xs whitespace-nowrap overflow-hidden text-ellipsis">
+                    <BsQuote /> {replyTo.sender.firstName} {replyTo.sender.lastName}
+                  </div>
+                  <div className="whitespace-nowrap overflow-hidden text-ellipsis">
+                    {replyTo.content}
+                  </div>
+                </div>
+              )}
               <div>
                 {title && <div className="font-semibold text-[0.8rem] mb-0.5">{title}</div>}
                 <div className="text-sm">{content}</div>
@@ -184,7 +216,7 @@ const Message: React.FC<MessageProps> = ({
         >
           {/* Using labels instead of buttons so they won't open dropdown when being clicked */}
           <li>
-            <label className="cursor-pointer">
+            <label onClick={onReplyClick} className="cursor-pointer">
               <BsReply size={20} />
             </label>
           </li>
@@ -192,7 +224,6 @@ const Message: React.FC<MessageProps> = ({
             <label
               tabIndex={0}
               onFocus={() => {
-                console.log('emoji');
                 setShownPopupType('emojis');
               }}
               className="cursor-pointer"

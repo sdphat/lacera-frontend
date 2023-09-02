@@ -1,5 +1,5 @@
 import { ConversationLogItem, ReactionType, User } from '@/types/types';
-import React from 'react';
+import React, { useRef } from 'react';
 import Message, { StatusType } from './Message';
 import { useAuthStore } from '@/app/_store/auth.store';
 
@@ -13,6 +13,8 @@ export interface MessageBlockProps {
   onRetrieveMessage?: (message: ConversationLogItem) => void;
   onAvatarClick?: () => void;
   onReactToMessage?: (message: ConversationLogItem, reactionType: ReactionType) => void;
+  onReplyToMessage?: (message: ConversationLogItem) => void;
+  focusedMessageId?: number;
   retrievableDurationInSec: number;
 }
 
@@ -22,11 +24,13 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
   sender,
   log,
   retrievableDurationInSec,
+  focusedMessageId,
   onMessageInview = () => {},
   onRemoveMessage = () => {},
   onRetrieveMessage = () => {},
   onAvatarClick = () => {},
   onReactToMessage = () => {},
+  onReplyToMessage = () => {},
 }) => {
   const { currentUser } = useAuthStore();
   if (!currentUser) {
@@ -61,6 +65,8 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
           }
         }
 
+        console.log(item);
+
         return (
           <Message
             key={item.id}
@@ -69,13 +75,16 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
             isSender={isSender}
             postDate={item.createdAt}
             reactions={item.reactions}
+            replyTo={item.replyTo}
             onMessageInview={() => onMessageInview(item)}
             onRemoveMessage={() => onRemoveMessage(item)}
             onRetrieveMessage={() => onRetrieveMessage(item)}
             onReactToMessage={(reactionType) => onReactToMessage(item, reactionType)}
             onAvatarClick={onAvatarClick}
+            onReplyClick={() => onReplyToMessage(item)}
             title={idx === 0 ? `${sender.firstName} ${sender.lastName}` : undefined}
             status={displayedStatus}
+            isFocused={item.id === focusedMessageId}
             retrievableDurationInSec={retrievableDurationInSec}
           />
         );
