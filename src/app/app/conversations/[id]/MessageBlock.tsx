@@ -2,6 +2,11 @@ import { ConversationLogItem, ReactionType, User } from '@/types/types';
 import React, { useRef } from 'react';
 import Message, { StatusType } from './Message';
 import { useAuthStore } from '@/app/_store/auth.store';
+import TextMessageBody from './TextMessageBody';
+import { hasOnlyOneEmoji } from '@/app/_lib/emoji';
+import EmojiMessageBody from './EmojiMessageBody';
+import MediaMessageBody from './MediaMessageBody';
+import api from '@/app/_services/authAxiosInstance';
 
 export interface MessageBlockProps {
   isSender: boolean;
@@ -65,17 +70,18 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
           }
         }
 
-        console.log(item);
+        const containsOnlyOneEmoji =
+          item.type === 'text' && hasOnlyOneEmoji(item.content as string);
 
         return (
           <Message
             key={item.id}
             avatarUrl={idx === 0 ? sender.avatarUrl : undefined}
-            content={item.content}
             isSender={isSender}
             postDate={item.createdAt}
             reactions={item.reactions}
             replyTo={item.replyTo}
+            displayStyle={containsOnlyOneEmoji ? 'emoji' : 'normal'}
             onMessageInview={() => onMessageInview(item)}
             onRemoveMessage={() => onRemoveMessage(item)}
             onRetrieveMessage={() => onRetrieveMessage(item)}
@@ -86,7 +92,30 @@ const MessageBlock: React.FC<MessageBlockProps> = ({
             status={displayedStatus}
             isFocused={item.id === focusedMessageId}
             retrievableDurationInSec={retrievableDurationInSec}
-          />
+          >
+            {containsOnlyOneEmoji && <EmojiMessageBody>{item.content as string}</EmojiMessageBody>}
+            {!containsOnlyOneEmoji && item.type === 'text' && (
+              <TextMessageBody>{item.content as string}</TextMessageBody>
+            )}
+            {!containsOnlyOneEmoji && item.type === 'file' && (
+              <MediaMessageBody
+                progress={item.progress as number}
+                onDownloadFile={async () => {
+                  const url = item.content as string;
+                  const { data: fileStream } = await api.get(url, { responseType: 'blob' });
+                  const link = document.createElement('a');
+                  const fileObjectUrl = URL.createObjectURL(fileStream);
+                  link.href = fileObjectUrl;
+                  link.download = item.fileName as string;
+
+                  link.click();
+                  URL.revokeObjectURL(fileObjectUrl);
+                }}
+                fileName={item.fileName as string}
+                size={item.size as number}
+              />
+            )}
+          </Message>
         );
       })}
     </div>

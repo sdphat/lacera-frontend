@@ -98,6 +98,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     }
 
     const nextTempId = Math.min(...conversations.flatMap((c) => c.messages).map((m) => m.id)) - 1;
+
     set({
       conversations: conversations.map((conv) => {
         if (conv.id !== sendMessageDto.conversationId) {
@@ -105,6 +106,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
         } else {
           const tempMessage: Message = {
             id: nextTempId,
+            type: sendMessageDto.type,
             createdAt: sendMessageDto.postDate,
             content: sendMessageDto.content,
             conversationId: sendMessageDto.conversationId,
@@ -114,6 +116,16 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
             status: 'sending',
             senderId: currentUser.id,
             sender: { ...currentUser, lastActive: new Date(), online: true },
+            replyTo: conv.messages.find((m) => m.id === sendMessageDto.replyTo) as Message,
+            fileName:
+              sendMessageDto.content instanceof File
+                ? (sendMessageDto.content as File).name
+                : undefined,
+            size:
+              sendMessageDto.content instanceof File
+                ? (sendMessageDto.content as File).size
+                : undefined,
+            progress: 0,
           };
           return {
             ...conv,
@@ -122,7 +134,31 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
         }
       }),
     });
-    return sendMessage(sendMessageDto);
+
+    if (sendMessageDto.type === 'file') {
+      return sendMessage(sendMessageDto, (progress: number) => {
+        const { conversations } = get();
+        set({
+          conversations: conversations.map((c) => ({
+            ...c,
+            messages: c.messages.map((msg) =>
+              msg.id === nextTempId
+                ? {
+                    ...msg,
+                    progress,
+                  }
+                : msg,
+            ),
+          })),
+        });
+      });
+    }
+
+    if (sendMessageDto.type === 'text') {
+      return sendMessage(sendMessageDto);
+    }
+
+    return true;
   },
   init: async () => {
     if (isIntialized) {

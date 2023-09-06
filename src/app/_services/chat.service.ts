@@ -1,9 +1,10 @@
-import { Conversation, Message, ReactionType } from '@/types/types';
+import { Conversation, Message, MessageType, ReactionType } from '@/types/types';
 import { socketInit } from '../_lib/socket';
-
+import api from './authAxiosInstance';
 export interface SendMessageDto {
+  type: 'text' | 'file';
   conversationId: number;
-  content: string;
+  content: string | File;
   postDate: Date;
   replyTo?: number;
 }
@@ -33,9 +34,47 @@ export const conversationSocket = socketInit({
 
 conversationSocket.connect();
 
-export const sendMessage = async (sendMessageDto: SendMessageDto): Promise<boolean> => {
-  const result = await conversationSocket.emitWithAck('createMessage', sendMessageDto);
-  return Boolean(result.error);
+export const sendMessage = async (
+  sendMessageDto: SendMessageDto,
+  onUploadProgress = (progress: number) => {},
+): Promise<boolean> => {
+  if (sendMessageDto.type === 'text') {
+    const result = await conversationSocket.emitWithAck('createMessage', sendMessageDto);
+    return Boolean(result.error);
+  }
+
+  if (sendMessageDto.type === 'file') {
+    let doneUploadingPromiseResolve: (value: any) => void;
+    const doneUploadingPromise = new Promise((resolve) => {
+      doneUploadingPromiseResolve = resolve;
+    });
+    const { data } = await api.postForm(
+      '/conversation/upload',
+      {
+        file: sendMessageDto.content as File,
+      },
+      {
+        onUploadProgress(progressEvent) {
+          onUploadProgress(progressEvent.progress as number);
+          console.log(progressEvent.progress);
+          if (progressEvent.progress === 1) {
+            doneUploadingPromiseResolve(1);
+          }
+        },
+      },
+    );
+    await doneUploadingPromise;
+    console.log('done!');
+    const fileUrl = data;
+    const result = await conversationSocket.emitWithAck('createMessage', {
+      ...sendMessageDto,
+      content: fileUrl,
+      fileName: (sendMessageDto.content as File).name,
+    });
+    return Boolean(result.error);
+  }
+
+  return true;
 };
 
 export const reactToMessage = async ({

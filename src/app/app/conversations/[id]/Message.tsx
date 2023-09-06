@@ -19,16 +19,18 @@ import { BsHandThumbsUp, BsHeart, BsQuote, BsReply, BsThreeDots } from 'react-ic
 
 export type StatusType = 'sending' | 'sent' | 'received' | 'seen';
 
+export type DisplayType = 'normal' | 'emoji';
 export interface MessageProps {
   isSender?: boolean;
   title?: string;
-  content: string;
+  children: ReactNode;
   avatarUrl?: string;
   reactions?: ReactionCountRecord;
   status?: StatusType;
   className?: string;
   postDate: Date;
   isFocused?: boolean;
+  displayStyle?: DisplayType;
   replyTo?: ConversationLogItem;
   retrievableDurationInSec: number;
   onMessageInview?: () => void;
@@ -60,6 +62,9 @@ const messageContentClassNames = cva(
       focus: {
         true: 'bg-secondary text-gray-200',
       },
+      emoji: {
+        true: 'bg-white border-none',
+      },
     },
   },
 );
@@ -82,21 +87,17 @@ const statusTypeIconRecord: Record<Exclude<StatusType, 'deleted'>, ReactElement>
   sending: <></>,
 };
 
-const emojiIconRecord: Record<string, ReactElement> = {
-  '👍': <FiThumbsUp className="fill-primary text-white" size={64} />,
-  '❤': <FiHeart className="fill-red-500 text-white" size={64} />,
-};
-
 const Message: React.FC<MessageProps> = ({
   title,
-  content,
   avatarUrl,
   reactions,
   status,
+  children,
   postDate,
   className = '',
   isSender = false,
   isFocused = false,
+  displayStyle = 'normal',
   retrievableDurationInSec,
   replyTo,
   onMessageInview = () => {},
@@ -155,52 +156,57 @@ const Message: React.FC<MessageProps> = ({
         `}
       >
         <div>
-          {hasOnlyOneEmoji(content) ? (
+          <div
+            className={messageContentClassNames({
+              state: status === 'sending' ? 'sending' : 'normal',
+              side: isSender ? 'sender' : 'recipient',
+              focus: isFocused,
+              emoji: displayStyle === 'emoji',
+            })}
+          >
+            {displayStyle === 'emoji' && <div>{children}</div>}
+            {displayStyle === 'normal' && (
+              <>
+                {replyTo && (
+                  <div className="relative rounded-md px-4 py-2 border border-gray-200 w-64 bg-gray-100 cursor-pointer text-sm text-gray-500 mb-3">
+                    <div className="font-bold text-xs whitespace-nowrap overflow-hidden text-ellipsis">
+                      <BsQuote /> {replyTo.sender.firstName} {replyTo.sender.lastName}
+                    </div>
+                    <div className="whitespace-nowrap overflow-hidden text-ellipsis">
+                      {replyTo.content}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  {title && <div className="font-semibold text-[0.8rem] mb-0.5">{title}</div>}
+                  <div>{children}</div>
+                </div>
+                <div className="flex justify-between items-center mt-2 empty:hidden">
+                  {postDate && (
+                    <time className="text-xs opacity-70">{formatDistanceToNow(postDate)} ago</time>
+                  )}
+                  {reactions && (
+                    <div className="flex justify-end gap-1 ml-6">
+                      {Object.entries(reactions).map(([reactionType, { count }]) => (
+                        <MessageReaction
+                          key={reactionType}
+                          icon={reactionTypeIconRecord[reactionType as ReactionType]}
+                          count={count}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+          {/* hasOnlyOneEmoji(content) ? (
             <div>
               {emojiIconRecord[content.trim()] ?? (
                 <span className="text-6xl">{content.trim()}</span>
               )}
             </div>
-          ) : (
-            <div
-              className={messageContentClassNames({
-                state: status === 'sending' ? 'sending' : 'normal',
-                side: isSender ? 'sender' : 'recipient',
-                focus: isFocused,
-              })}
-            >
-              {replyTo && (
-                <div className="relative rounded-md px-4 py-2 border border-gray-200 w-64 bg-gray-100 cursor-pointer text-sm text-gray-500 mb-3">
-                  <div className="font-bold text-xs whitespace-nowrap overflow-hidden text-ellipsis">
-                    <BsQuote /> {replyTo.sender.firstName} {replyTo.sender.lastName}
-                  </div>
-                  <div className="whitespace-nowrap overflow-hidden text-ellipsis">
-                    {replyTo.content}
-                  </div>
-                </div>
-              )}
-              <div>
-                {title && <div className="font-semibold text-[0.8rem] mb-0.5">{title}</div>}
-                <div className="text-sm">{content}</div>
-              </div>
-              <div className="flex justify-between items-center mt-2 empty:hidden">
-                {postDate && (
-                  <time className="text-xs opacity-70">{formatDistanceToNow(postDate)} ago</time>
-                )}
-                {reactions && (
-                  <div className="flex justify-end gap-1 ml-6">
-                    {Object.entries(reactions).map(([reactionType, { count }]) => (
-                      <MessageReaction
-                        key={reactionType}
-                        icon={reactionTypeIconRecord[reactionType as ReactionType]}
-                        count={count}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          ) : */}
           {status && (
             <div className="absolute top-[100%] w-full flex justify-end pr-1.5">
               <div>{statusTypeIconRecord[status]}</div>

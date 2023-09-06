@@ -102,3 +102,18 @@ export const groupReactionByCount = (reactions: Reaction[]): ReactionCountRecord
 // 1 MB = 1^6 bytes
 export const validateMaxFileSize = (file: File, maxSizeInMb: number) =>
   file.size <= maxSizeInMb * 1000000;
+
+export const downloadFile = (file: File, name: string) => {
+  const url = URL.createObjectURL(file);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = file.name;
+  link.dispatchEvent(
+    new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+    }),
+  );
+  URL.revokeObjectURL(url);
+};

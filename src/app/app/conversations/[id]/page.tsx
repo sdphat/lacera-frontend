@@ -3,7 +3,13 @@
 import React, { useState, MouseEventHandler, useRef, useEffect, useMemo } from 'react';
 import Avatar from '@/app/_components/Avatar';
 import { formatDistanceToNow } from 'date-fns';
-import { ConversationLogItem, User, GroupConversation, ReactionType } from '@/types/types';
+import {
+  ConversationLogItem,
+  User,
+  GroupConversation,
+  ReactionType,
+  MessageType,
+} from '@/types/types';
 import MessageBlock from './MessageBlock';
 import InputBar from './InputBar';
 import { FiMoreVertical, FiTrash } from 'react-icons/fi';
@@ -14,7 +20,10 @@ import { BsChevronDoubleDown } from 'react-icons/bs';
 import { countBy, throttle } from 'lodash';
 import ConfirmDialog from '@/app/_components/ConfirmDialog';
 import DeletedMessageNotification from './DeletedMessageNotification';
-import { groupLogByBlock, groupReactionByCount } from '@/app/_lib/helper';
+import { downloadFile, groupLogByBlock, groupReactionByCount } from '@/app/_lib/helper';
+import Message from './Message';
+import MediaMessageBody from './MediaMessageBody';
+import api from '@/app/_services/authAxiosInstance';
 
 export function Conversation() {
   const router = useRouter();
@@ -38,6 +47,7 @@ export function Conversation() {
   const [chosenMessage, setChosenMessage] = useState<ConversationLogItem>();
   const [replyMessage, setReplyMessage] = useState<ConversationLogItem>();
   const [focusedMessageId, setFocusMessageId] = useState<number>();
+  const [fileList, setFileList] = useState<FileList>();
   const justSentRef = useRef(false);
 
   const conversationId = Number(params.id);
@@ -96,29 +106,53 @@ export function Conversation() {
   );
 
   const sendMessageResetState = async ({
+    type,
     content,
     replyTo,
-  }: {
-    content: string;
-    replyTo?: number;
-  }) => {
+  }:
+    | {
+        type: 'text';
+        content: string;
+        replyTo?: number;
+      }
+    | {
+        type: 'file';
+        content: File;
+        replyTo?: number;
+      }) => {
     justSentRef.current = true;
     setReplyMessage(undefined);
     setFocusMessageId(undefined);
-    await sendMessage({ content, replyTo, conversationId, postDate: new Date() });
+    await sendMessage({ type, content, replyTo, conversationId, postDate: new Date() });
   };
 
   const handleThumbupClick: MouseEventHandler<HTMLElement> = async (e) => {
-    await sendMessageResetState({ content: '👍' });
+    await sendMessageResetState({ content: '👍', type: 'text' });
   };
 
-  const handleSendMessage: MouseEventHandler<HTMLElement> = async (e) => {
+  const handleSendTextMessage: MouseEventHandler<HTMLElement> = async (e) => {
     if (text) {
       setText('');
       await sendMessageResetState({
+        type: 'text',
         content: text,
         replyTo: replyMessage ? replyMessage.id : undefined,
       });
+    }
+  };
+
+  const handleSendFile = async (fileList: FileList) => {
+    if (fileList && fileList.length) {
+      await Promise.allSettled(
+        Array.from(fileList).map((file) =>
+          sendMessageResetState({
+            type: 'file',
+            content: file,
+            replyTo: replyMessage ? replyMessage.id : undefined,
+          }),
+        ),
+      );
+      setFileList(undefined);
     }
   };
 
@@ -215,6 +249,11 @@ export function Conversation() {
   // For rendering
   let currentMessageBlockIdx = 0;
 
+  const handleFilesSelect = (fileList: FileList) => {
+    setFileList(fileList);
+    handleSendFile(fileList);
+  };
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex justify-between flex-none px-4 pt-4 pb-3 border-b-2 border-gray-200 w-full">
@@ -289,6 +328,15 @@ export function Conversation() {
               return <DeletedMessageNotification key={block.id} />;
             }
           })}
+          {/* {fileList && (
+            <MediaMessageBody
+              file={fileList.item(0) as File}
+              progress={1.0}
+              onDownloadFile={(file) => {
+                downloadFile(file, file.name);
+              }}
+            />
+          )} */}
           <button
             style={{
               display: shouldDisplayScrollButton ? '' : 'none',
@@ -306,8 +354,9 @@ export function Conversation() {
           replyTo={replyMessage}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onSend={handleSendMessage}
+          onSendText={handleSendTextMessage}
           onThumbupClick={handleThumbupClick}
+          onFilesSelect={handleFilesSelect}
           onReplyMessageClick={() => handleReplyMessageClick()}
           onReplyMessageRemove={() => handleReplyMessageRemove()}
         />

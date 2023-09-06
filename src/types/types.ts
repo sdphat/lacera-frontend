@@ -1,3 +1,5 @@
+export type MessageType = 'text' | 'file';
+
 export type ReactionType = 'like' | 'heart';
 export interface Reaction {
   type: ReactionType;
@@ -30,16 +32,20 @@ export interface MessageRecipient {
 export type MessageStatus = 'deleted' | 'received' | 'sending' | 'sent';
 export interface Message {
   id: number;
+  type: MessageType;
   senderId: number;
   sender: User;
   conversationId: number;
-  content: string;
+  content: string | File;
   reactions: Reaction[];
   createdAt: Date;
   updatedAt: Date;
   messageUsers: MessageRecipient[];
   status: MessageStatus;
   replyTo: Message;
+  size?: number;
+  fileName?: string;
+  progress?: number;
 }
 
 export interface CreatedMessage extends Message {
