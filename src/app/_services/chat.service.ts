@@ -64,7 +64,6 @@ export const sendMessage = async (
       },
     );
     await doneUploadingPromise;
-    console.log('done!');
     const fileUrl = data;
     const result = await conversationSocket.emitWithAck('createMessage', {
       ...sendMessageDto,

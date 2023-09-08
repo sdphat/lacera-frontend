@@ -5,6 +5,8 @@ import {
   contactsSocket,
   getAllContacts,
   getContact,
+  getPendingRequests,
+  rejectFriendRequest,
   searchContacts,
   sendFriendRequest,
 } from '../_services/contacts.service';
@@ -13,6 +15,8 @@ import { useAuthStore } from './auth.store';
 
 export interface ContactsStore {
   contacts: Contact[];
+
+  pendingRequests: any;
 
   getContacts: () => Promise<void>;
 
@@ -51,10 +55,13 @@ export interface ContactsStore {
     senderId: number;
     receiverId: number;
   }) => Promise<void>;
+
+  getPendingRequests: () => Promise<void>;
 }
 
 export const useContactsStore = create<ContactsStore>()((set, get) => ({
   contacts: [],
+  pendingRequests: {},
 
   async getContacts() {
     const contacts = await getAllContacts();
@@ -85,6 +92,12 @@ export const useContactsStore = create<ContactsStore>()((set, get) => ({
   },
 
   async rejectFriendRequest({ senderId, receiverId }) {
-    await this.rejectFriendRequest({ senderId, receiverId });
+    await rejectFriendRequest({ senderId, receiverId });
+  },
+
+  async getPendingRequests() {
+    const userId = useAuthStore.getState().currentUser!.id;
+    const { data: pendingRequests } = await getPendingRequests(userId);
+    set({ pendingRequests });
   },
 }));

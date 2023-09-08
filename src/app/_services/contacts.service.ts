@@ -64,3 +64,7 @@ export const rejectFriendRequest = async ({
 }) => {
   await contactsSocket.emitWithAck('rejectFriendRequest', { senderId, receiverId });
 };
+
+export const getPendingRequests = async (userId: number) => {
+  return contactsSocket.emitWithAck('friendRequestList');
+};
