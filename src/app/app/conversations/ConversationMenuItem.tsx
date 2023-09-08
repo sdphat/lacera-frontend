@@ -1,11 +1,13 @@
 'use client';
-import React, { MouseEventHandler } from 'react';
+import React, { MouseEventHandler, ReactNode } from 'react';
 import Avatar from '@/app/_components/Avatar';
-import { Conversation, GroupConversation } from '@/types/types';
+import { Conversation, ConversationLogItem, GroupConversation, Message } from '@/types/types';
+import { BsFile } from 'react-icons/bs';
+import { FiFile } from 'react-icons/fi';
 
 export interface ConversationMenuItemProps {
-  title: string;
-  subTitle?: string;
+  title: ReactNode;
+  subTitle?: ReactNode;
   avatarUrls: string | string[];
   includeDivider?: boolean;
   online?: boolean;
@@ -45,6 +47,42 @@ const ConversationMenuItem: React.FC<ConversationMenuItemProps> = ({
   );
 };
 
+const createSubtitle = (message: Message, currentUserId: number): ReactNode => {
+  // const subTitle = message
+  //   ? message.sender.id === currentUserId
+  //     ? `You: ${message.content}`
+  //     : `${message.sender.firstName} ${message.sender.lastName}: ${message.content}`
+  //   : 'Start the conversation with a greeting 😊';
+
+  let subtitle: ReactNode;
+
+  subtitle = (
+    <div>
+      <span className="text-gray-700 font-bold">
+        {message.status !== 'deleted' && (
+          <>{message.sender.id === currentUserId ? 'You: ' : `${message.sender.firstName}: `}</>
+        )}
+      </span>
+      <span>
+        {message.status === 'deleted' ? (
+          '[Deleted]'
+        ) : (
+          <>
+            {message.type === 'text' && (message.content as string)}
+            {message.type === 'file' && (
+              <span>
+                <FiFile size={16} className="inline mb-0.5"></FiFile> [File]
+              </span>
+            )}
+          </>
+        )}
+      </span>
+    </div>
+  );
+
+  return subtitle;
+};
+
 export interface ConversationMenuItemHOCProps {
   conversation: Conversation;
   currentUserId: number;
@@ -61,18 +99,21 @@ export const ConversationMenuItemHOC: React.FC<ConversationMenuItemHOCProps> = (
   onClick = () => {},
 }) => {
   const lastMessage = conversation.messages[conversation.messages.length - 1];
+
   const subTitle = lastMessage
-    ? lastMessage.sender.id === currentUserId
-      ? `You: ${lastMessage.content}`
-      : `${lastMessage.sender.firstName} ${lastMessage.sender.lastName}: ${lastMessage.content}`
+    ? createSubtitle(lastMessage, currentUserId)
     : 'Start the conversation with a greeting 😊';
 
+  // Count all messages satisfy all the following:
+  // 1. Not being sent by the current user
+  // 2. Not deleted
+  // 3. Haven't been received by the current user
   const amountOfUnreadMessages = conversation.messages.reduce(
     (count, message) =>
       count +
       Number(
         currentUserId !== message.senderId &&
-          message.content !== 'This message has been retrieved' &&
+          message.status !== 'deleted' &&
           (!message.messageUsers.length ||
             message.messageUsers.some(
               (mu) => mu.recipientId === currentUserId && mu.messageStatus === 'received',

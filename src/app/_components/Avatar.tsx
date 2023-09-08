@@ -1,10 +1,10 @@
-import React, { MouseEventHandler } from 'react';
+import React, { MouseEventHandler, ReactNode } from 'react';
 import Image from 'next/image';
 
 export interface AvatarProps {
   onAvatarClick?: MouseEventHandler<HTMLElement>;
-  title?: string;
-  subTitle?: string;
+  title?: ReactNode;
+  subTitle?: ReactNode;
   avatarUrls: string | string[];
   className?: string;
   online?: boolean;
