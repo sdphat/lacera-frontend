@@ -38,6 +38,7 @@ export interface ConversationStore {
   sendMessage: (sendMessageDto: SendMessageDto) => Promise<boolean>;
 
   init: () => Promise<any>;
+
   reset: () => void;
 
   getConversation: (
@@ -160,6 +161,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
 
     return true;
   },
+
   init: async () => {
     if (isIntialized) {
       return;

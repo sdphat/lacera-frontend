@@ -9,13 +9,9 @@ import { groupContactsByAlphabet } from '@/app/_lib/contacts';
 import { BsSearch } from 'react-icons/bs';
 
 const Contacts = () => {
-  const { contacts, getContacts } = useContactsStore();
+  const { contacts } = useContactsStore();
   const [searchText, setSearchText] = useState('');
   const router = useRouter();
-
-  useEffect(() => {
-    getContacts();
-  }, [getContacts]);
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();

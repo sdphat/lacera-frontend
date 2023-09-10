@@ -1,4 +1,4 @@
-import { Contact, ContactDetail } from '@/types/types';
+import { Contact, ContactDetail, ContactDetailStatus } from '@/types/types';
 import { socketInit } from '../_lib/socket';
 
 export const contactsSocket = socketInit({
@@ -6,6 +6,11 @@ export const contactsSocket = socketInit({
 });
 
 contactsSocket.connect();
+
+export interface FriendStatusPayload {
+  user: ContactDetail;
+  status: ContactDetailStatus;
+}
 
 export const getAllContacts = async () => {
   const contacts = await contactsSocket.emitWithAck('fetchAll');
@@ -31,8 +36,8 @@ export const sendFriendRequest = async ({
 }: {
   senderId: number;
   receiverId: number;
-}) => {
-  await contactsSocket.emitWithAck('sendFriendRequest', { senderId, receiverId });
+}): Promise<FriendStatusPayload> => {
+  return contactsSocket.emitWithAck('sendFriendRequest', { senderId, receiverId });
 };
 
 export const cancelFriendRequest = async ({
@@ -41,8 +46,8 @@ export const cancelFriendRequest = async ({
 }: {
   senderId: number;
   receiverId: number;
-}) => {
-  await contactsSocket.emitWithAck('cancelFriendRequest', { senderId, receiverId });
+}): Promise<FriendStatusPayload> => {
+  return contactsSocket.emitWithAck('cancelFriendRequest', { senderId, receiverId });
 };
 
 export const acceptFriendRequest = async ({
@@ -51,8 +56,8 @@ export const acceptFriendRequest = async ({
 }: {
   senderId: number;
   receiverId: number;
-}) => {
-  await contactsSocket.emitWithAck('acceptFriendRequest', { senderId, receiverId });
+}): Promise<FriendStatusPayload> => {
+  return contactsSocket.emitWithAck('acceptFriendRequest', { senderId, receiverId });
 };
 
 export const rejectFriendRequest = async ({
@@ -61,10 +66,10 @@ export const rejectFriendRequest = async ({
 }: {
   senderId: number;
   receiverId: number;
-}) => {
-  await contactsSocket.emitWithAck('rejectFriendRequest', { senderId, receiverId });
+}): Promise<FriendStatusPayload> => {
+  return contactsSocket.emitWithAck('rejectFriendRequest', { senderId, receiverId });
 };
 
-export const getPendingRequests = async (userId: number) => {
+export const getPendingRequests = async () => {
   return contactsSocket.emitWithAck('friendRequestList');
 };

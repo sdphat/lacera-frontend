@@ -83,8 +83,15 @@ export interface GroupConversation extends Conversation {
 
 export interface Contact extends User {}
 
+export type ContactDetailStatus =
+  | 'accepted'
+  | 'rejected'
+  | 'pendingRequest'
+  | 'pendingAccept'
+  | 'notAdded';
+
 export interface ContactDetail extends Contact {
   backgroundUrl: string;
   aboutMe: string;
-  status: 'accepted' | 'rejected' | 'pendingRequest' | 'pendingAccept' | 'notAdded';
+  status: ContactDetailStatus;
 }

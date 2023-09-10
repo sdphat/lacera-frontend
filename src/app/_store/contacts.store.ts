@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import {
+  FriendStatusPayload,
   acceptFriendRequest,
   cancelFriendRequest,
   contactsSocket,
@@ -13,10 +14,23 @@ import {
 import { Contact, ContactDetail } from '@/types/types';
 import { useAuthStore } from './auth.store';
 
+interface IncomingRequest {
+  User: ContactDetail;
+}
+
+interface OutgoingRequest {
+  Target: ContactDetail;
+}
+
+interface PendingRequests {
+  receivedRequests: IncomingRequest[];
+  sentRequests: OutgoingRequest[];
+}
+
 export interface ContactsStore {
   contacts: Contact[];
 
-  pendingRequests: any;
+  pendingRequests: PendingRequests;
 
   getContacts: () => Promise<void>;
 
@@ -24,13 +38,17 @@ export interface ContactsStore {
 
   getContact: (id: number) => Promise<ContactDetail>;
 
+  init: () => Promise<any>;
+
+  reset: () => void;
+
   sendFriendRequest: ({
     senderId,
     receiverId,
   }: {
     senderId: number;
     receiverId: number;
-  }) => Promise<void>;
+  }) => Promise<FriendStatusPayload>;
 
   rejectFriendRequest: ({
     senderId,
@@ -38,7 +56,7 @@ export interface ContactsStore {
   }: {
     senderId: number;
     receiverId: number;
-  }) => Promise<void>;
+  }) => Promise<FriendStatusPayload>;
 
   acceptFriendRequest: ({
     senderId,
@@ -46,7 +64,7 @@ export interface ContactsStore {
   }: {
     senderId: number;
     receiverId: number;
-  }) => Promise<void>;
+  }) => Promise<FriendStatusPayload>;
 
   cancelFriendRequest: ({
     senderId,
@@ -54,14 +72,44 @@ export interface ContactsStore {
   }: {
     senderId: number;
     receiverId: number;
-  }) => Promise<void>;
+  }) => Promise<FriendStatusPayload>;
 
   getPendingRequests: () => Promise<void>;
 }
 
+let isIntialized = false;
+
 export const useContactsStore = create<ContactsStore>()((set, get) => ({
   contacts: [],
-  pendingRequests: {},
+  pendingRequests: {
+    receivedRequests: [],
+    sentRequests: [],
+  },
+
+  async init() {
+    if (isIntialized) {
+      return;
+    }
+    isIntialized = true;
+    contactsSocket.connect();
+
+    contactsSocket.addEventListener({
+      successEvent: 'friendStatus',
+      onSuccess: (friendStatus: FriendStatusPayload) => {},
+    });
+  },
+
+  async reset() {
+    isIntialized = false;
+    contactsSocket.reset();
+    set({
+      contacts: [],
+      pendingRequests: {
+        receivedRequests: [],
+        sentRequests: [],
+      },
+    });
+  },
 
   async getContacts() {
     const contacts = await getAllContacts();
@@ -80,24 +128,61 @@ export const useContactsStore = create<ContactsStore>()((set, get) => ({
   },
 
   async sendFriendRequest({ senderId, receiverId }) {
-    await sendFriendRequest({ senderId, receiverId });
+    const response = await sendFriendRequest({ senderId, receiverId });
+    const { pendingRequests } = get();
+    set({
+      pendingRequests: {
+        ...pendingRequests,
+        sentRequests: pendingRequests.sentRequests.concat({ Target: response.user }),
+      },
+    });
+    return response;
   },
 
   async acceptFriendRequest({ senderId, receiverId }) {
-    await acceptFriendRequest({ senderId, receiverId });
+    const response = await acceptFriendRequest({ senderId, receiverId });
+    const { contacts, pendingRequests } = get();
+    set({
+      contacts: contacts.concat(response.user),
+      pendingRequests: {
+        ...pendingRequests,
+        receivedRequests: pendingRequests.receivedRequests.filter(
+          (r) => r.User.id !== response.user.id,
+        ),
+      },
+    });
+    return response;
   },
 
   async cancelFriendRequest({ senderId, receiverId }) {
-    await cancelFriendRequest({ senderId, receiverId });
+    const response = await cancelFriendRequest({ senderId, receiverId });
+    console.log(response);
+    const { pendingRequests } = get();
+    set({
+      pendingRequests: {
+        ...pendingRequests,
+        sentRequests: pendingRequests.sentRequests.filter((r) => r.Target.id !== response.user.id),
+      },
+    });
+    return response;
   },
 
   async rejectFriendRequest({ senderId, receiverId }) {
-    await rejectFriendRequest({ senderId, receiverId });
+    const response = await rejectFriendRequest({ senderId, receiverId });
+    const { pendingRequests } = get();
+    set({
+      pendingRequests: {
+        ...pendingRequests,
+        receivedRequests: pendingRequests.receivedRequests.filter(
+          (r) => r.User.id !== response.user.id,
+        ),
+      },
+    });
+    return response;
   },
 
   async getPendingRequests() {
-    const userId = useAuthStore.getState().currentUser!.id;
-    const { data: pendingRequests } = await getPendingRequests(userId);
+    const { data: pendingRequests } = await getPendingRequests();
     set({ pendingRequests });
   },
 }));
