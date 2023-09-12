@@ -42,12 +42,6 @@ export interface MessageProps {
   onReplyClick?: () => void;
 }
 
-export interface MessageReactionProps {
-  icon: ReactElement;
-  count: number;
-  onClick?: MouseEventHandler<HTMLElement>;
-}
-
 const messageContentClassNames = cva(
   'rounded-lg border-gray-200 border-2 shadow-sm shadow-gray-50 pt-2 pb-3 h-max',
   {
@@ -70,9 +64,26 @@ const messageContentClassNames = cva(
   },
 );
 
-const MessageReaction: React.FC<MessageReactionProps> = ({ icon, count, onClick = () => {} }) => (
-  <div onClick={onClick} className="badge min-w-[3rem] justify-normal bg-white border-gray-200">
-    {icon} <div className="ml-1 text-xs text-black">{count}</div>
+export interface MessageReactionProps {
+  icon: ReactElement;
+  count: number;
+  userReacted: boolean;
+  onClick?: MouseEventHandler<HTMLElement>;
+}
+
+const MessageReaction: React.FC<MessageReactionProps> = ({
+  icon,
+  count,
+  userReacted,
+  onClick = () => {},
+}) => (
+  <div
+    onClick={onClick}
+    className={`badge min-w-[3rem] justify-normal bg-white border-2 border-gray-200 ${
+      userReacted ? '!bg-blue-400 text-white !border-gray-300' : ''
+    }`}
+  >
+    {icon} <div className="ml-1 text-xs">{count}</div>
   </div>
 );
 
@@ -205,8 +216,9 @@ const Message: React.FC<MessageProps> = ({
                   )}
                   {reactions && (
                     <div className="flex justify-end gap-1 ml-6">
-                      {Object.entries(reactions).map(([reactionType, { count }]) => (
+                      {Object.entries(reactions).map(([reactionType, { count, userReacted }]) => (
                         <MessageReaction
+                          userReacted={userReacted}
                           key={reactionType}
                           icon={reactionTypeIconRecord[reactionType as ReactionType]}
                           count={count}
@@ -296,7 +308,11 @@ const Message: React.FC<MessageProps> = ({
                 setShownPopupType('');
               }}
             >
-              <FiHeart className="hover:fill-red-500" />
+              <FiHeart
+                className={`hover:fill-red-500 ${
+                  reactions?.heart?.userReacted ? 'fill-red-500' : ''
+                }`}
+              />
             </button>
             <button
               onClick={() => {
@@ -304,7 +320,11 @@ const Message: React.FC<MessageProps> = ({
                 setShownPopupType('');
               }}
             >
-              <FiThumbsUp className="hover:fill-primary" />
+              <FiThumbsUp
+                className={`hover:fill-primary ${
+                  reactions?.like?.userReacted ? 'fill-primary' : ''
+                }`}
+              />
             </button>
           </ul>
         )}

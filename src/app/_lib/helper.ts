@@ -80,7 +80,10 @@ export const groupLogByBlock = (log: ConversationLogItem[]): LogBlock[] => {
   return messageBlocks;
 };
 
-export const groupReactionByCount = (reactions: Reaction[]): ReactionCountRecord => {
+export const groupReactionByCount = (
+  reactions: Reaction[],
+  userId: number,
+): ReactionCountRecord => {
   if (!reactions) {
     return {};
   }
@@ -91,6 +94,7 @@ export const groupReactionByCount = (reactions: Reaction[]): ReactionCountRecord
     const reactionCount: ReactionCount = {
       count: reactions.length,
       type: type as ReactionType,
+      userReacted: reactions.some((r) => r.userId === userId),
     };
     reactionCountRecord[type as ReactionType] = reactionCount;
   }

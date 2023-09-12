@@ -9,6 +9,7 @@ export interface Reaction {
 export interface ReactionCount {
   type: ReactionType;
   count: number;
+  userReacted: boolean;
 }
 
 export type ReactionCountRecord = Partial<Record<ReactionType, ReactionCount>>;

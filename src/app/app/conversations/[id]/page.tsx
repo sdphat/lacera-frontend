@@ -97,7 +97,7 @@ export function Conversation() {
   const blocks = groupLogByBlock(
     conversation.messages.map<ConversationLogItem>((message) => ({
       ...message,
-      reactions: groupReactionByCount(message.reactions),
+      reactions: groupReactionByCount(message.reactions, currentUser.id),
     })),
   );
   const messageBlockCount = blocks.reduce(
@@ -328,15 +328,6 @@ export function Conversation() {
               return <DeletedMessageNotification key={block.id} />;
             }
           })}
-          {/* {fileList && (
-            <MediaMessageBody
-              file={fileList.item(0) as File}
-              progress={1.0}
-              onDownloadFile={(file) => {
-                downloadFile(file, file.name);
-              }}
-            />
-          )} */}
           <button
             style={{
               display: shouldDisplayScrollButton ? '' : 'none',
@@ -353,7 +344,7 @@ export function Conversation() {
         <InputBar
           replyTo={replyMessage}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => setText(e.target.value.slice(0, 200))}
           onSendText={handleSendTextMessage}
           onThumbupClick={handleThumbupClick}
           onFilesSelect={handleFilesSelect}
