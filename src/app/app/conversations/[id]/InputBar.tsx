@@ -80,10 +80,10 @@ const InputBar: React.FC<InputBarProps> = ({
               <div className="font-bold text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                 <BsQuote /> {replyTo.sender.firstName} {replyTo.sender.lastName}
               </div>
-              <div className="whitespace-nowrap overflow-hidden text-ellipsis mt-2">
+              <div className="whitespace-nowrap overflow-hidden text-ellipsis">
                 {replyTo.type === 'text' && (replyTo.content as string)}
                 {replyTo.type === 'file' && (
-                  <div className="flex">
+                  <div className="flex mt-2">
                     <div className="flex-none w-12">
                       <FileIcon
                         extension={replyTo.fileName?.split('.').pop() as DefaultExtensionType}

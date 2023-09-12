@@ -57,7 +57,7 @@ export interface CreatedMessage extends Message {
  */
 export interface ConversationLogItem extends Omit<Message, 'reactions' | 'replyTo'> {
   reactions: ReactionCountRecord;
-  replyTo: ConversationLogItem;
+  replyTo: Omit<ConversationLogItem, 'reactions' | 'replyTo'>;
 }
 
 export type ConversationType = 'private' | 'group';

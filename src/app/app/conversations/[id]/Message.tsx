@@ -32,7 +32,7 @@ export interface MessageProps {
   postDate: Date;
   isFocused?: boolean;
   displayStyle?: DisplayType;
-  replyTo?: ConversationLogItem;
+  replyTo?: ConversationLogItem['replyTo'];
   retrievableDurationInSec: number;
   onMessageInview?: () => void;
   onRemoveMessage?: () => void;
