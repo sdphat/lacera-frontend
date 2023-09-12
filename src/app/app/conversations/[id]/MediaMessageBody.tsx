@@ -30,7 +30,7 @@ const MediaMessageBody: React.FC<MediaMessageBodyProps> = ({
           <div className="font-semibold overflow-hidden text-ellipsis">{fileName}</div>
           <div className="mt-1 text-xs overflow-hidden text-ellipsis">
             {progress < 1 && `${downloadSize.toString()} / ${sizeStr.toString()}`}
-            {progress === 1 && sizeStr.toString()}
+            {(progress === undefined || progress === 1) && sizeStr.toString()}
           </div>
         </div>
         <div className="flex-1"></div>

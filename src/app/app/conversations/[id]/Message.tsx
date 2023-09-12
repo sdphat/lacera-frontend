@@ -16,6 +16,7 @@ import { TbCheck, TbChecks, TbMoodPlus } from 'react-icons/tb';
 import { hasOnlyOneEmoji } from '@/app/_lib/emoji';
 import { useInView } from 'react-intersection-observer';
 import { BsHandThumbsUp, BsHeart, BsQuote, BsReply, BsThreeDots } from 'react-icons/bs';
+import { DefaultExtensionType, FileIcon, defaultStyles } from 'react-file-icon';
 
 export type StatusType = 'sending' | 'sent' | 'received' | 'seen';
 
@@ -173,7 +174,24 @@ const Message: React.FC<MessageProps> = ({
                       <BsQuote /> {replyTo.sender.firstName} {replyTo.sender.lastName}
                     </div>
                     <div className="whitespace-nowrap overflow-hidden text-ellipsis">
-                      {replyTo.content}
+                      {replyTo.type === 'text' && (replyTo.content as string)}
+                      {replyTo.type === 'file' && (
+                        <div className="flex">
+                          <div className="flex-none w-12">
+                            <FileIcon
+                              extension={replyTo.fileName?.split('.').pop() as DefaultExtensionType}
+                              {...defaultStyles[
+                                replyTo.fileName?.split('.').pop() as DefaultExtensionType
+                              ]}
+                            />
+                          </div>
+                          <div className="ml-4 py-1 text-sm overflow-hidden whitespace-nowrap">
+                            <div className="font-semibold overflow-hidden text-ellipsis">
+                              {replyTo.fileName}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

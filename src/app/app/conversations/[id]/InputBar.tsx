@@ -2,6 +2,7 @@ import { FiPaperclip, FiSend, FiSmile, FiThumbsUp } from 'react-icons/fi';
 import React, { ChangeEventHandler, FormEventHandler, MouseEventHandler, useRef } from 'react';
 import { ConversationLogItem } from '@/types/types';
 import { BsQuote } from 'react-icons/bs';
+import { DefaultExtensionType, FileIcon, defaultStyles } from 'react-file-icon';
 
 export interface InputBarProps {
   value: string;
@@ -79,8 +80,25 @@ const InputBar: React.FC<InputBarProps> = ({
               <div className="font-bold text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                 <BsQuote /> {replyTo.sender.firstName} {replyTo.sender.lastName}
               </div>
-              <div className="whitespace-nowrap overflow-hidden text-ellipsis">
-                {replyTo.content}
+              <div className="whitespace-nowrap overflow-hidden text-ellipsis mt-2">
+                {replyTo.type === 'text' && (replyTo.content as string)}
+                {replyTo.type === 'file' && (
+                  <div className="flex">
+                    <div className="flex-none w-12">
+                      <FileIcon
+                        extension={replyTo.fileName?.split('.').pop() as DefaultExtensionType}
+                        {...defaultStyles[
+                          replyTo.fileName?.split('.').pop() as DefaultExtensionType
+                        ]}
+                      />
+                    </div>
+                    <div className="ml-4 py-1 text-sm overflow-hidden whitespace-nowrap">
+                      <div className="font-semibold overflow-hidden text-ellipsis">
+                        {replyTo.fileName}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
