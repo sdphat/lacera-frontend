@@ -238,17 +238,20 @@ const Message: React.FC<MessageProps> = ({
               <BsReply size={20} />
             </label>
           </li>
-          <li>
-            <label
-              tabIndex={0}
-              onFocus={() => {
-                setShownPopupType('emojis');
-              }}
-              className="cursor-pointer"
-            >
-              <TbMoodPlus size={20} />
-            </label>
-          </li>
+          {/* Send reactions to emoji content type is not allowed*/}
+          {displayStyle !== 'emoji' && (
+            <li>
+              <label
+                tabIndex={0}
+                onFocus={() => {
+                  setShownPopupType('emojis');
+                }}
+                className="cursor-pointer"
+              >
+                <TbMoodPlus size={20} />
+              </label>
+            </li>
+          )}
           <li>
             <label
               onFocus={() => setShownPopupType('options')}
@@ -280,7 +283,7 @@ const Message: React.FC<MessageProps> = ({
         )}
 
         {/* Emoji selector */}
-        {shownPopupType === 'emojis' && (
+        {shownPopupType === 'emojis' && displayStyle !== 'emoji' && (
           <ul
             className={`dropdown-content absolute flex shadow bg-base-100 py-2 px-3 rounded-md 
               ${
