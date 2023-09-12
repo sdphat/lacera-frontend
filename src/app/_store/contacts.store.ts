@@ -92,11 +92,6 @@ export const useContactsStore = create<ContactsStore>()((set, get) => ({
     }
     isIntialized = true;
     contactsSocket.connect();
-
-    contactsSocket.addEventListener({
-      successEvent: 'friendStatus',
-      onSuccess: (friendStatus: FriendStatusPayload) => {},
-    });
   },
 
   async reset() {
