@@ -27,9 +27,27 @@ const ImageElement: React.FC<ImageElementProps> = ({ avatarUrls }) => {
   // Return a collection of avatars and remaining number of avatars if there are 4 more avatar urls
   if (avatarUrls.length > 4) {
     <>
-      <Image className="!w-[50%] !h-[50%]" alt="" width={12} height={12} src={avatarUrls[0]} />
-      <Image className="!w-[50%] !h-[50%]" alt="" width={12} height={12} src={avatarUrls[1]} />
-      <Image className="!w-[50%] !h-[50%]" alt="" width={12} height={12} src={avatarUrls[2]} />
+      <Image
+        className="!w-[50%] !h-[50%] inline-block"
+        alt=""
+        width={12}
+        height={12}
+        src={avatarUrls[0]}
+      />
+      <Image
+        className="!w-[50%] !h-[50%] inline-block"
+        alt=""
+        width={12}
+        height={12}
+        src={avatarUrls[1]}
+      />
+      <Image
+        className="!w-[50%] !h-[50%] inline-block"
+        alt=""
+        width={12}
+        height={12}
+        src={avatarUrls[2]}
+      />
       <div className="!w-[50%] !h-[50%] bg-gray-400 text-white font-bold text-xl">
         +{avatarUrls.length - 4}
       </div>
@@ -42,7 +60,7 @@ const ImageElement: React.FC<ImageElementProps> = ({ avatarUrls }) => {
       {avatarUrls.map((url, i) => (
         <Image
           key={url + i}
-          className="!w-[50%] !h-[50%]"
+          className="!w-[50%] !h-[50%] inline-block"
           alt=""
           width={12}
           height={12}
