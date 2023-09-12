@@ -200,13 +200,6 @@ const Message: React.FC<MessageProps> = ({
               </>
             )}
           </div>
-          {/* hasOnlyOneEmoji(content) ? (
-            <div>
-              {emojiIconRecord[content.trim()] ?? (
-                <span className="text-6xl">{content.trim()}</span>
-              )}
-            </div>
-          ) : */}
           {status && (
             <div className="absolute top-[100%] w-full flex justify-end pr-1.5">
               <div>{statusTypeIconRecord[status]}</div>
@@ -218,7 +211,8 @@ const Message: React.FC<MessageProps> = ({
           className={`
             hidden group-hover:flex absolute gap-1.5 w-max 
             ${isSender ? 'right-[calc(100%+8px)]' : 'left-[calc(100%+8px)]'} 
-            top-[50%] translate-y-[-50%]`}
+            top-[50%] translate-y-[-50%] focus-within:opacity-0 focus-within:pointer-events-none'
+            }`}
         >
           {/* Using labels instead of buttons so they won't open dropdown when being clicked */}
           <li>
@@ -271,7 +265,9 @@ const Message: React.FC<MessageProps> = ({
         {shownPopupType === 'emojis' && (
           <ul
             className={`dropdown-content absolute flex shadow bg-base-100 py-2 px-3 rounded-md 
-              translate-x-2 !top-[50%] -translate-y-[50%] z-50 gap-3`}
+              ${
+                isSender ? 'left-0 -translate-x-[calc(100%+8px)]' : 'right-0 translate-x-[8px]'
+              } !top-[50%] -translate-y-[50%] z-50 gap-3 w-fit`}
           >
             <button
               onClick={() => {
