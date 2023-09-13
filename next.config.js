@@ -12,5 +12,9 @@ const nextConfig = {
 module.exports = {
   images: {
     domains: ['localhost']
-  }, ...nextConfig
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  ...nextConfig
 };

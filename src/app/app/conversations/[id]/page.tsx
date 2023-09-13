@@ -17,13 +17,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/app/_store/auth.store';
 import { useConversationStore } from '@/app/_store/conversation.store';
 import { BsChevronDoubleDown } from 'react-icons/bs';
-import { countBy, throttle } from 'lodash';
+import { throttle } from 'lodash';
 import ConfirmDialog from '@/app/_components/ConfirmDialog';
 import DeletedMessageNotification from './DeletedMessageNotification';
-import { downloadFile, groupLogByBlock, groupReactionByCount } from '@/app/_lib/helper';
-import Message from './Message';
-import MediaMessageBody from './MediaMessageBody';
-import api from '@/app/_services/authAxiosInstance';
+import { groupLogByBlock, groupReactionByCount } from '@/app/_lib/helper';
 
 export function Conversation() {
   const router = useRouter();

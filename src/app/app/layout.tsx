@@ -8,6 +8,7 @@ import { heartbeat } from '../_services/user.service';
 import { useEffect } from 'react';
 import { useContactsStore } from '../_store/contacts.store';
 import { useConversationStore } from '../_store/conversation.store';
+import NonSSRWrapper from '../_components/NonSSRWrapper';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { refreshToken } = useAuthStore();
@@ -40,20 +41,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     conversationStoreReset,
     refreshToken,
   ]);
-  if (!refreshToken && typeof window !== undefined) {
-    router.push('/login');
-  }
+
+  useEffect(() => {
+    if (!refreshToken && typeof window !== undefined) {
+      router.push('/login');
+    }
+  }, [refreshToken, router]);
   return (
-    <div className="h-screen">
-      <div className="flex flex-col h-full">
-        <div className="flex-none">
-          <Navbar />
-        </div>
-        <div className="flex flex-1 min-h-0">
-          <Sidebar />
-          {children}
+    <NonSSRWrapper>
+      <div className="h-screen">
+        <div className="flex flex-col h-full">
+          <div className="flex-none">
+            <Navbar />
+          </div>
+          <div className="flex flex-1 min-h-0">
+            <Sidebar />
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </NonSSRWrapper>
   );
 }
