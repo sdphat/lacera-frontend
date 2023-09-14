@@ -22,7 +22,7 @@ import { useContactsStore } from '@/app/_store/contacts.store';
 import { useParams, useRouter } from 'next/navigation';
 import { ContactDetail } from '@/types/types';
 import { useConversationStore } from '@/app/_store/conversation.store';
-import { FiEdit, FiUserX } from 'react-icons/fi';
+import { FiEdit, FiUserX, FiX } from 'react-icons/fi';
 import ProfileEditModal, { ProfileData } from './ProfileEditModal';
 import Modal from '@/app/_components/Modal';
 
@@ -123,7 +123,7 @@ const Profile = () => {
       },
       rejected: {
         onClick: () => {},
-        icon: <div>Rejected</div>,
+        icon: <FiX className="w-6 h-6" />,
         text: 'Rejected',
       },
     }),
@@ -157,7 +157,8 @@ const Profile = () => {
     setContact(c);
   };
 
-  const shouldShowThreeDotBtn = contact?.status === 'accepted';
+  const shouldShowThreeDotBtn =
+    contact?.status === 'accepted' || contact?.status === 'pendingAccept';
 
   if (!contact) {
     return null;
@@ -222,6 +223,14 @@ const Profile = () => {
                         <button onClick={handleClickUnfriend} className="text-red-500">
                           <FiUserX size={20} />
                           Unfriend
+                        </button>
+                      </li>
+                    )}
+                    {contact.status === 'pendingAccept' && (
+                      <li>
+                        <button onClick={handleRejectFriendRequest} className="text-red-500">
+                          <FiUserX size={20} />
+                          Reject
                         </button>
                       </li>
                     )}
