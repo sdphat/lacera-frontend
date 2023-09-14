@@ -19,12 +19,8 @@ const Sidebar: React.FC = () => {
     useConversationStore();
   const [searchText, setSearchText] = useState('');
   const [searchResult, setSearchResult] = useState<Conversation[]>([]);
-  const { contacts, getContacts } = useContactsStore();
+  const { contacts } = useContactsStore();
   const [shouldShowAddGroupModal, setShouldShowAddGroupModal] = useState(false);
-
-  useEffect(() => {
-    getContacts();
-  }, [getContacts]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -180,16 +176,6 @@ const Sidebar: React.FC = () => {
 };
 
 export default function ConversationLayout({ children }: { children: React.ReactNode }) {
-  const { init, getConversations } = useConversationStore();
-  useEffect(() => {
-    async function initialize() {
-      await init();
-      await getConversations();
-    }
-
-    initialize();
-  }, [getConversations, init]);
-
   return (
     <div className="h-full flex flex-1">
       <div className="flex-none">

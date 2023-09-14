@@ -12,8 +12,12 @@ import NonSSRWrapper from '../_components/NonSSRWrapper';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { refreshToken } = useAuthStore();
-  const { init: contactsStoreInit, reset: contactsStoreReset } = useContactsStore();
-  const { init: conversationStoreInit, reset: conversationStoreReset } = useConversationStore();
+  const { init: contactsStoreInit, reset: contactsStoreReset, getContacts } = useContactsStore();
+  const {
+    init: conversationStoreInit,
+    reset: conversationStoreReset,
+    getConversations,
+  } = useConversationStore();
   const router = useRouter();
   useEffect(() => {
     const intervalId = setInterval(heartbeat, 5000);
@@ -25,7 +29,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       if (!refreshToken) return;
 
       await contactsStoreInit();
+      await getContacts();
       await conversationStoreInit();
+      await getConversations();
     }
 
     setupStores();
@@ -38,6 +44,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     contactsStoreReset,
     conversationStoreInit,
     conversationStoreReset,
+    getContacts,
+    getConversations,
     refreshToken,
   ]);
 
