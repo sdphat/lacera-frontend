@@ -70,6 +70,16 @@ export const rejectFriendRequest = async ({
   return contactsSocket.emitWithAck('rejectFriendRequest', { senderId, receiverId });
 };
 
+export const unfriend = async ({
+  senderId,
+  receiverId,
+}: {
+  senderId: number;
+  receiverId: number;
+}): Promise<{ user: ContactDetail }> => {
+  return contactsSocket.emitWithAck('unfriend', { senderId, receiverId });
+};
+
 export const getPendingRequests = async () => {
   return contactsSocket.emitWithAck('friendRequestList');
 };

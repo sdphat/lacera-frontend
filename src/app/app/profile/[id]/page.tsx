@@ -5,7 +5,6 @@ import Image from 'next/image';
 import React, {
   MouseEventHandler,
   ReactNode,
-  use,
   useCallback,
   useEffect,
   useMemo,
@@ -23,9 +22,9 @@ import { useContactsStore } from '@/app/_store/contacts.store';
 import { useParams, useRouter } from 'next/navigation';
 import { ContactDetail } from '@/types/types';
 import { useConversationStore } from '@/app/_store/conversation.store';
-import { FiEdit } from 'react-icons/fi';
+import { FiEdit, FiUserX } from 'react-icons/fi';
 import ProfileEditModal, { ProfileData } from './ProfileEditModal';
-import api from '@/app/_services/authAxiosInstance';
+import Modal from '@/app/_components/Modal';
 
 const Profile = () => {
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -36,6 +35,7 @@ const Profile = () => {
     cancelFriendRequest,
     rejectFriendRequest,
     sendFriendRequest,
+    unfriend,
   } = useContactsStore();
 
   const { currentUser, updateProfile } = useAuthStore();
@@ -45,6 +45,7 @@ const Profile = () => {
   const [profileEditInitialValues, setProfileEditInitialValues] = useState<Partial<ProfileData>>(
     {},
   );
+  const [shouldShowUnfriendModal, setShouldShowUnfriendModal] = useState(false);
 
   useEffect(() => {
     async function initProfileEditValues() {
@@ -129,6 +130,10 @@ const Profile = () => {
     [handleAcceptFriendRequest, handleCancelFriendRequest, handleSendFriendRequest],
   );
 
+  const handleClickUnfriend = async () => {
+    setShouldShowUnfriendModal(true);
+  };
+
   const handleClickChat = async () => {
     const conversation = await getConversation({ targetId: Number(id) });
     console.log(conversation);
@@ -143,6 +148,16 @@ const Profile = () => {
     setContact(c);
     setEditProfileOpen(false);
   };
+
+  const handleConfirmUnfriend = async () => {
+    if (!currentUser) return;
+    setShouldShowUnfriendModal(false);
+    await unfriend({ senderId: currentUser.id, receiverId: Number(id) });
+    const c = await getContact(Number(id));
+    setContact(c);
+  };
+
+  const shouldShowThreeDotBtn = contact?.status === 'accepted';
 
   if (!contact) {
     return null;
@@ -196,9 +211,23 @@ const Profile = () => {
               <button onClick={handleClickChat} className="btn btn-primary">
                 <BsChatDots className="w-5 h-5" /> Chat
               </button>
-              <button className="btn">
-                <BsThreeDots className="w-6 h-6" />
-              </button>
+              {shouldShowThreeDotBtn && (
+                <div className="dropdown">
+                  <button className="btn">
+                    <BsThreeDots className="w-6 h-6" />
+                  </button>
+                  <ul className="dropdown-content mt-2 menu p-2 shadow bg-base-100 rounded-box w-52 z-50">
+                    {contact.status === 'accepted' && (
+                      <li>
+                        <button onClick={handleClickUnfriend} className="text-red-500">
+                          <FiUserX size={20} />
+                          Unfriend
+                        </button>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -213,6 +242,20 @@ const Profile = () => {
           onSave={handleSaveEditProfile}
           open={editProfileOpen}
         />
+      )}
+      {shouldShowUnfriendModal && (
+        <Modal
+          open={true}
+          onCancel={() => setShouldShowUnfriendModal(false)}
+          onConfirm={handleConfirmUnfriend}
+          confirmBtnText="Confirm"
+          cancelBtnText="Cancel"
+          title={`Unfriend ${contact.firstName} ${contact.lastName}`}
+        >
+          <div className="mt-4">
+            This will unfriend {contact.firstName} {contact.lastName}. Are you sure?
+          </div>
+        </Modal>
       )}
     </div>
   );

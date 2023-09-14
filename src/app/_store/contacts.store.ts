@@ -10,6 +10,7 @@ import {
   rejectFriendRequest,
   searchContacts,
   sendFriendRequest,
+  unfriend,
 } from '../_services/contacts.service';
 import { Contact, ContactDetail } from '@/types/types';
 import { useAuthStore } from './auth.store';
@@ -73,6 +74,8 @@ export interface ContactsStore {
     senderId: number;
     receiverId: number;
   }) => Promise<FriendStatusPayload>;
+
+  unfriend: ({ senderId, receiverId }: { senderId: number; receiverId: number }) => Promise<void>;
 
   getPendingRequests: () => Promise<void>;
 }
@@ -179,5 +182,14 @@ export const useContactsStore = create<ContactsStore>()((set, get) => ({
   async getPendingRequests() {
     const { data: pendingRequests } = await getPendingRequests();
     set({ pendingRequests });
+  },
+
+  async unfriend({ senderId, receiverId }) {
+    const { user: contact } = await unfriend({ senderId, receiverId });
+    // Todo: Update state
+    const { contacts } = get();
+    set({
+      contacts: contacts.filter((c) => c.id !== contact.id),
+    });
   },
 }));
