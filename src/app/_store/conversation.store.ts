@@ -221,14 +221,18 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
   async getConversation(params) {
     const { conversations } = get();
     const { currentUser } = useAuthStore.getState();
+    console.log(conversations);
     if (!currentUser) {
       return null;
     }
 
+    // Handle finding conversation by CONVERSATION ID if it already exists in memory.
     if ('id' in params && conversations.find((c) => c.id === params.id)) {
       return conversations.find((c) => c.id === params.id) ?? null;
     }
 
+    // Handle finding conversation by TARGET USER ID if it already exists in memory
+    // (apply to private conversation only!)
     if (
       'targetId' in params &&
       conversations.find(
@@ -246,6 +250,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
       );
     }
 
+    // If it isn't in memory then ask the server for it
     const requestedConversation = await getConversation(params);
     if (requestedConversation) {
       set({ conversations: [...conversations, requestedConversation] });

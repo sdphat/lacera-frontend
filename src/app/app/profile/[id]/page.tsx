@@ -131,6 +131,7 @@ const Profile = () => {
 
   const handleClickChat = async () => {
     const conversation = await getConversation({ targetId: Number(id) });
+    console.log(conversation);
     if (conversation) {
       router.push('/app/conversations/' + conversation.id);
     }

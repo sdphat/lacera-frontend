@@ -180,7 +180,7 @@ const Sidebar: React.FC = () => {
 };
 
 export default function ConversationLayout({ children }: { children: React.ReactNode }) {
-  const { init, reset, getConversations } = useConversationStore();
+  const { init, getConversations } = useConversationStore();
   useEffect(() => {
     async function initialize() {
       await init();
@@ -188,8 +188,7 @@ export default function ConversationLayout({ children }: { children: React.React
     }
 
     initialize();
-    return reset;
-  }, [getConversations, init, reset]);
+  }, [getConversations, init]);
 
   return (
     <div className="h-full flex flex-1">
