@@ -173,7 +173,6 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
       onSuccess: (message: Message) => {
         message.createdAt = new Date(message.createdAt);
         message.updatedAt = new Date(message.updatedAt);
-        console.log(message);
         const { conversations } = get();
         updateConversationMessage(conversations, message);
         set({ conversations });
@@ -407,9 +406,27 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
 
   async reactToMessage({ messageId, reactionType }) {
     const message = await reactToMessage({ messageId, reactionType });
-    console.log(message);
     if (!message) {
       return;
     }
+
+    // Parse date values
+    message.createdAt = new Date(message.createdAt);
+    message.updatedAt = new Date(message.updatedAt);
+
+    // Update message into state
+    const { conversations } = get();
+    set({
+      conversations: conversations.map((c) => ({
+        ...c,
+        messages: c.messages.map((m) => {
+          const matchMessage = m.id === messageId;
+          if (!matchMessage) {
+            return m;
+          }
+          return message;
+        }),
+      })),
+    });
   },
 }));
