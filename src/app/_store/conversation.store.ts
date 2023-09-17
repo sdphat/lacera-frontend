@@ -18,19 +18,19 @@ import {
 import { useAuthStore } from './auth.store';
 import { getHeartbeat } from '../_services/user.service';
 
-const updateConversationMessage = (conversations: Conversation[], message: Message) => {
-  const foundConversation = conversations.find((c) => c.id === message.conversationId);
-  if (foundConversation) {
-    const foundMessageIdx = foundConversation.messages.findIndex((m) => m.id === message.id);
-    if (foundMessageIdx !== -1) {
-      foundConversation.messages[foundMessageIdx] = message;
-    } else {
-      foundConversation.messages.push(message);
-    }
-    foundConversation.messages.sort((m1, m2) => m1.id - m2.id);
-  }
-  return conversations;
-};
+// const updateConversationMessage = (conversations: Conversation[], message: Message) => {
+//   const foundConversation = conversations.find((c) => c.id === message.conversationId);
+//   if (foundConversation) {
+//     const foundMessageIdx = foundConversation.messages.findIndex((m) => m.id === message.id);
+//     if (foundMessageIdx !== -1) {
+//       foundConversation.messages[foundMessageIdx] = message;
+//     } else {
+//       foundConversation.messages.push(message);
+//     }
+//     foundConversation.messages.sort((m1, m2) => m1.id - m2.id);
+//   }
+//   return conversations;
+// };
 
 export interface ConversationStore {
   conversations: Conversation[];
@@ -170,12 +170,34 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     conversationSocket.connect();
     conversationSocket.addEventListener({
       successEvent: 'update',
-      onSuccess: (message: Message) => {
+      onSuccess: async (message: Message) => {
+        const conv = await getConversation({ id: message.conversationId });
+        const { conversations } = get();
+
+        // Parsing date
         message.createdAt = new Date(message.createdAt);
         message.updatedAt = new Date(message.updatedAt);
-        const { conversations } = get();
-        updateConversationMessage(conversations, message);
-        set({ conversations });
+
+        const foundConversation = conversations.find((c) => c.id === message.conversationId);
+        if (foundConversation) {
+          const foundMessageIdx = foundConversation.messages.findIndex((m) => m.id === message.id);
+          // Update message if message found then override the message and newer than message in memory
+          if (foundMessageIdx !== -1) {
+            if (foundConversation.messages[foundMessageIdx].updatedAt <= message.updatedAt) {
+              foundConversation.messages[foundMessageIdx] = message;
+            }
+          } else {
+            // Push in new message if the message isn't in memory
+            foundConversation.messages.push(message);
+          }
+          foundConversation.messages.sort((m1, m2) => m1.id - m2.id);
+          set({ conversations });
+        } else {
+          // Get conversation from server and push in memory if conversation isn't in memory
+          if (conv) {
+            set({ conversations: conversations.concat(conv) });
+          }
+        }
       },
     });
 

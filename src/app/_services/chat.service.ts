@@ -109,7 +109,10 @@ export const getConversations = async () => {
 
 export const getConversation = async (params: { id: number } | { targetId: number }) => {
   if ('id' in params) {
-    const { error, data } = await conversationSocket.emitWithAck('details', params.id);
+    const { error, data } = await conversationSocket.emitWithAck('details', {
+      conversationId: params.id,
+    });
+
     if (error) {
       return null;
     }
@@ -123,7 +126,6 @@ export const getConversation = async (params: { id: number } | { targetId: numbe
         targetId: params.targetId,
       },
     );
-    console.log(error, createdPrivateConversation);
     if (error) {
       return null;
     }
