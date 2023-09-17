@@ -103,7 +103,10 @@ const Avatar: React.FC<AvatarProps> = ({
   } else {
     return (
       <div className={`avatar flex-none ${avatarAdditionalClasses}`}>
-        <div onClick={onAvatarClick} className="w-11 rounded-full">
+        <div
+          onClick={onAvatarClick}
+          className={`w-11 rounded-full ${onAvatarClick ? 'cursor-pointer' : ''}`}
+        >
           <ImageElement avatarUrls={avatarUrls} />
         </div>
       </div>

@@ -13,6 +13,7 @@ import {
 import MessageBlock from './MessageBlock';
 import InputBar from './InputBar';
 import {
+  FiChevronRight,
   FiCornerDownLeft,
   FiCornerLeftDown,
   FiMoreVertical,
@@ -288,7 +289,12 @@ export function Conversation() {
             <Avatar
               avatarUrls={conversation.avatar ?? conversation.participants.map((p) => p.avatarUrl)}
               title={(conversation as GroupConversation).title}
-              subTitle={`${conversation.participants.length} members`}
+              subTitle={
+                <div className="cursor-pointer">
+                  {conversation.participants.length} members
+                  <FiChevronRight className="inline-block" />
+                </div>
+              }
             />
           )}
         </div>

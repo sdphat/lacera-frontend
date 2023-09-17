@@ -331,7 +331,9 @@ const Message: React.FC<MessageProps> = ({
       </div>
       {/* My avatar */}
       {isSender && (
-        <div className="flex-none w-11 ml-2">{avatarUrl && <Avatar avatarUrls={avatarUrl} />}</div>
+        <div className="flex-none w-11 ml-2">
+          {avatarUrl && <Avatar onAvatarClick={onAvatarClick} avatarUrls={avatarUrl} />}
+        </div>
       )}
     </div>
   );
