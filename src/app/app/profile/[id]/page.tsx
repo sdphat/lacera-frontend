@@ -122,7 +122,7 @@ const Profile = () => {
         text: 'Friends',
       },
       rejected: {
-        onClick: () => {},
+        onClick: handleSendFriendRequest,
         icon: <FiX className="w-6 h-6" />,
         text: 'Rejected',
       },
