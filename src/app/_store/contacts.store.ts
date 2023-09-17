@@ -14,6 +14,7 @@ import {
 } from '../_services/contacts.service';
 import { Contact, ContactDetail } from '@/types/types';
 import { useAuthStore } from './auth.store';
+import { leaveGroup } from '../_services/chat.service';
 
 interface IncomingRequest {
   User: ContactDetail;

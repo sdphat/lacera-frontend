@@ -134,3 +134,7 @@ export const getConversation = async (params: { id: number } | { targetId: numbe
     }
   }
 };
+
+export const leaveGroup = async (id: number) => {
+  await conversationSocket.emitWithAck('leaveGroup', { id });
+};

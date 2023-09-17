@@ -4,6 +4,7 @@ import {
   conversationSocket,
   getConversation,
   getConversations,
+  leaveGroup,
   reactToMessage,
   sendMessage,
 } from '../_services/chat.service';
@@ -90,6 +91,8 @@ export interface ConversationStore {
   updateHeartbeat: ({ userId }: { userId: number }) => Promise<void>;
 
   updateAllHeartbeats: () => Promise<void>;
+
+  leaveGroup: (id: number) => Promise<void>;
 }
 
 let isIntialized = false;
@@ -474,5 +477,11 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
         })),
       ),
     });
+  },
+
+  async leaveGroup(id) {
+    await leaveGroup(id);
+    const { conversations } = get();
+    set({ conversations: sortConversationsByUpdateDate(conversations.filter((c) => c.id !== id)) });
   },
 }));

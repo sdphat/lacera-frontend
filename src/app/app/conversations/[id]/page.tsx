@@ -12,7 +12,13 @@ import {
 } from '@/types/types';
 import MessageBlock from './MessageBlock';
 import InputBar from './InputBar';
-import { FiMoreVertical, FiTrash } from 'react-icons/fi';
+import {
+  FiCornerDownLeft,
+  FiCornerLeftDown,
+  FiMoreVertical,
+  FiRepeat,
+  FiTrash,
+} from 'react-icons/fi';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/app/_store/auth.store';
 import { useConversationStore } from '@/app/_store/conversation.store';
@@ -35,12 +41,14 @@ export function Conversation() {
     removeMessage,
     retrieveMessage,
     reactToMessage,
+    leaveGroup,
   } = useConversationStore();
   const [text, setText] = useState('');
   const [shouldDisplayScrollButton, setShouldDisplayScrollButton] = useState(false);
   const [shouldDisplayDeleteConvDialog, setShouldDisplayDeleteConvDialog] = useState(false);
   const [shouldDisplayDeleteMessDialog, setShouldDisplayDeleteMessDialog] = useState(false);
   const [shouldDisplayRetrieveMessDialog, setShouldDisplayRetrieveMessDialog] = useState(false);
+  const [shouldDisplayLeaveGroupDialog, setShouldDisplayLeaveGroupDialog] = useState(false);
   const [chosenMessage, setChosenMessage] = useState<ConversationLogItem>();
   const [replyMessage, setReplyMessage] = useState<ConversationLogItem>();
   const [focusedMessageId, setFocusMessageId] = useState<number>();
@@ -251,6 +259,16 @@ export function Conversation() {
     handleSendFile(fileList);
   };
 
+  const handleConfirmLeaveGroup = () => {
+    if (!conversation) return;
+    setShouldDisplayLeaveGroupDialog(false);
+    leaveGroup(conversation.id);
+  };
+
+  const handleCancelLeaveGroup = () => {
+    setShouldDisplayLeaveGroupDialog(false);
+  };
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex justify-between flex-none px-4 pt-4 pb-3 border-b-2 border-gray-200 w-full">
@@ -288,6 +306,12 @@ export function Conversation() {
                   <FiTrash size={20} />
                   Delete conversation
                 </button>
+                {conversation.type === 'group' && (
+                  <button onClick={() => setShouldDisplayLeaveGroupDialog(true)}>
+                    <FiCornerDownLeft size={20} />
+                    Leave group
+                  </button>
+                )}
               </li>
             </ul>
           </div>
@@ -368,6 +392,13 @@ export function Conversation() {
           onCancel={handleCancelRetrieveMess}
           title="Retrieve Message"
           message="Delete this message on both sides. This action is irreversable. Are you sure?"
+        />
+        <ConfirmDialog
+          open={shouldDisplayLeaveGroupDialog}
+          onConfirm={handleConfirmLeaveGroup}
+          onCancel={handleCancelLeaveGroup}
+          title="Leave group"
+          message="Are you sure you want to leave this group?"
         />
       </div>
     </div>
