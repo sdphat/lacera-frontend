@@ -28,6 +28,7 @@ import { throttle } from 'lodash';
 import ConfirmDialog from '@/app/_components/ConfirmDialog';
 import DeletedMessageNotification from './DeletedMessageNotification';
 import { groupLogByBlock, groupReactionByCount } from '@/app/_lib/helper';
+import Modal from '@/app/_components/Modal';
 
 export function Conversation() {
   const router = useRouter();
@@ -50,6 +51,7 @@ export function Conversation() {
   const [shouldDisplayDeleteMessDialog, setShouldDisplayDeleteMessDialog] = useState(false);
   const [shouldDisplayRetrieveMessDialog, setShouldDisplayRetrieveMessDialog] = useState(false);
   const [shouldDisplayLeaveGroupDialog, setShouldDisplayLeaveGroupDialog] = useState(false);
+  const [shouldDisplayGroupMembers, setShouldDisplayGroupMembers] = useState(false);
   const [chosenMessage, setChosenMessage] = useState<ConversationLogItem>();
   const [replyMessage, setReplyMessage] = useState<ConversationLogItem>();
   const [focusedMessageId, setFocusMessageId] = useState<number>();
@@ -270,6 +272,10 @@ export function Conversation() {
     setShouldDisplayLeaveGroupDialog(false);
   };
 
+  const handleViewGroupMembers = () => {
+    setShouldDisplayGroupMembers(true);
+  };
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex justify-between flex-none px-4 pt-4 pb-3 border-b-2 border-gray-200 w-full">
@@ -290,7 +296,7 @@ export function Conversation() {
               avatarUrls={conversation.avatar ?? conversation.participants.map((p) => p.avatarUrl)}
               title={(conversation as GroupConversation).title}
               subTitle={
-                <div className="cursor-pointer">
+                <div className="cursor-pointer" onClick={handleViewGroupMembers}>
                   {conversation.participants.length} members
                   <FiChevronRight className="inline-block" />
                 </div>
@@ -406,6 +412,34 @@ export function Conversation() {
           title="Leave group"
           message="Are you sure you want to leave this group?"
         />
+        <Modal
+          open={shouldDisplayGroupMembers}
+          confirmBtnText=""
+          cancelBtnText=""
+          className="max-w-sm"
+          onCancel={() => setShouldDisplayGroupMembers(false)}
+          title={
+            <div className="text-center">Group members ({conversation.participants.length})</div>
+          }
+        >
+          <ul className="mt-8 space-y-4 px-1">
+            {conversation.participants.map((p) => (
+              <li key={p.id}>
+                <Avatar
+                  onAvatarClick={() => router.push(`/app/profile/${p.id}`)}
+                  avatarUrls={p.avatarUrl}
+                  title={
+                    <span>
+                      {p.firstName} {p.lastName}{' '}
+                      <span className="font-medium">{p.id === currentUser.id ? '(You)' : ''}</span>
+                    </span>
+                  }
+                  subTitle={'Member'}
+                />
+              </li>
+            ))}
+          </ul>
+        </Modal>
       </div>
     </div>
   );
