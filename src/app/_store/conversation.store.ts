@@ -18,19 +18,25 @@ import {
 import { useAuthStore } from './auth.store';
 import { getHeartbeat } from '../_services/user.service';
 
-// const updateConversationMessage = (conversations: Conversation[], message: Message) => {
-//   const foundConversation = conversations.find((c) => c.id === message.conversationId);
-//   if (foundConversation) {
-//     const foundMessageIdx = foundConversation.messages.findIndex((m) => m.id === message.id);
-//     if (foundMessageIdx !== -1) {
-//       foundConversation.messages[foundMessageIdx] = message;
-//     } else {
-//       foundConversation.messages.push(message);
-//     }
-//     foundConversation.messages.sort((m1, m2) => m1.id - m2.id);
-//   }
-//   return conversations;
-// };
+/**
+ * Inline sort the conversation array with updated date from latest to oldest
+ * @param conversations Conversation array to sort
+ * @returns Sorted conversation array
+ */
+const sortConversationsByUpdateDate = (conversations: Conversation[]) => {
+  const lastUpdated: Record<number, number> = {};
+
+  // Cache each conversation last updated timestamp to sort the conversations more efficiently
+  for (const conversation of conversations) {
+    lastUpdated[conversation.id] = Math.max(
+      ...conversation.messages.map((m) => m.updatedAt.valueOf()),
+    );
+  }
+
+  conversations.sort((c1, c2) => lastUpdated[c2.id] - lastUpdated[c1.id]);
+
+  return conversations;
+};
 
 export interface ConversationStore {
   conversations: Conversation[];
@@ -99,58 +105,61 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     }
 
     const nextTempId = Math.min(...conversations.flatMap((c) => c.messages).map((m) => m.id)) - 1;
+    const convs = conversations.map((conv) => {
+      if (conv.id !== sendMessageDto.conversationId) {
+        return conv;
+      } else {
+        const tempMessage: Message = {
+          id: nextTempId,
+          type: sendMessageDto.type,
+          createdAt: sendMessageDto.postDate,
+          content: sendMessageDto.content,
+          conversationId: sendMessageDto.conversationId,
+          messageUsers: [],
+          reactions: [],
+          updatedAt: new Date(),
+          status: 'sending',
+          senderId: currentUser.id,
+          sender: { ...currentUser, lastActive: new Date(), online: true },
+          replyTo: conv.messages.find((m) => m.id === sendMessageDto.replyTo) as Message,
+          fileName:
+            sendMessageDto.content instanceof File
+              ? (sendMessageDto.content as File).name
+              : undefined,
+          size:
+            sendMessageDto.content instanceof File
+              ? (sendMessageDto.content as File).size
+              : undefined,
+          progress: 0,
+        };
+        return {
+          ...conv,
+          messages: [...conv.messages, tempMessage],
+        };
+      }
+    });
 
     set({
-      conversations: conversations.map((conv) => {
-        if (conv.id !== sendMessageDto.conversationId) {
-          return conv;
-        } else {
-          const tempMessage: Message = {
-            id: nextTempId,
-            type: sendMessageDto.type,
-            createdAt: sendMessageDto.postDate,
-            content: sendMessageDto.content,
-            conversationId: sendMessageDto.conversationId,
-            messageUsers: [],
-            reactions: [],
-            updatedAt: new Date(),
-            status: 'sending',
-            senderId: currentUser.id,
-            sender: { ...currentUser, lastActive: new Date(), online: true },
-            replyTo: conv.messages.find((m) => m.id === sendMessageDto.replyTo) as Message,
-            fileName:
-              sendMessageDto.content instanceof File
-                ? (sendMessageDto.content as File).name
-                : undefined,
-            size:
-              sendMessageDto.content instanceof File
-                ? (sendMessageDto.content as File).size
-                : undefined,
-            progress: 0,
-          };
-          return {
-            ...conv,
-            messages: [...conv.messages, tempMessage],
-          };
-        }
-      }),
+      conversations: sortConversationsByUpdateDate(convs),
     });
 
     if (sendMessageDto.type === 'file') {
       return sendMessage(sendMessageDto, (progress: number) => {
         const { conversations } = get();
         set({
-          conversations: conversations.map((c) => ({
-            ...c,
-            messages: c.messages.map((msg) =>
-              msg.id === nextTempId
-                ? {
-                    ...msg,
-                    progress,
-                  }
-                : msg,
-            ),
-          })),
+          conversations: sortConversationsByUpdateDate(
+            conversations.map((c) => ({
+              ...c,
+              messages: c.messages.map((msg) =>
+                msg.id === nextTempId
+                  ? {
+                      ...msg,
+                      progress,
+                    }
+                  : msg,
+              ),
+            })),
+          ),
         });
       });
     }
@@ -191,11 +200,11 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
             foundConversation.messages.push(message);
           }
           foundConversation.messages.sort((m1, m2) => m1.id - m2.id);
-          set({ conversations });
+          set({ conversations: sortConversationsByUpdateDate(conversations) });
         } else {
           // Get conversation from server and push in memory if conversation isn't in memory
           if (conv) {
-            set({ conversations: conversations.concat(conv) });
+            set({ conversations: sortConversationsByUpdateDate(conversations.concat(conv)) });
           }
         }
       },
@@ -208,26 +217,28 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
         message.updatedAt = new Date(message.updatedAt);
         const { conversations } = get();
         set({
-          conversations: conversations.map((conv) => {
-            if (conv.id !== message.conversationId) {
-              return conv;
-            }
+          conversations: sortConversationsByUpdateDate(
+            conversations.map((conv) => {
+              if (conv.id !== message.conversationId) {
+                return conv;
+              }
 
-            const foundTempMessageIdx = conv.messages.findIndex((m) => m.id === message.tempId);
-            if (~foundTempMessageIdx) {
-              return conv;
-            }
+              const foundTempMessageIdx = conv.messages.findIndex((m) => m.id === message.tempId);
+              if (~foundTempMessageIdx) {
+                return conv;
+              }
 
-            const copyMessages = conv.messages.concat();
-            message.createdAt = new Date(message.createdAt);
-            message.updatedAt = new Date(message.updatedAt);
-            copyMessages.splice(foundTempMessageIdx, 1, message);
+              const copyMessages = conv.messages.concat();
+              message.createdAt = new Date(message.createdAt);
+              message.updatedAt = new Date(message.updatedAt);
+              copyMessages.splice(foundTempMessageIdx, 1, message);
 
-            return {
-              ...conv,
-              messages: copyMessages,
-            };
-          }),
+              return {
+                ...conv,
+                messages: copyMessages,
+              };
+            }),
+          ),
         });
       },
     });
@@ -242,7 +253,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
   async getConversation(params) {
     const { conversations } = get();
     const { currentUser } = useAuthStore.getState();
-    console.log(conversations);
+
     if (!currentUser) {
       return null;
     }
@@ -274,7 +285,9 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     // If it isn't in memory then ask the server for it
     const requestedConversation = await getConversation(params);
     if (requestedConversation) {
-      set({ conversations: [...conversations, requestedConversation] });
+      set({
+        conversations: sortConversationsByUpdateDate([...conversations, requestedConversation]),
+      });
       return requestedConversation;
     }
     return null;
@@ -282,8 +295,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
 
   async getConversations() {
     const conversations = (await getConversations()) ?? [];
-    console.log(conversations);
-    set({ conversations });
+    set({ conversations: sortConversationsByUpdateDate(conversations) });
   },
 
   async updateMessagesSeenStatus(conversationId: number, messageIds: number[]) {
@@ -314,7 +326,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
         }
       }
     });
-    set({ conversations });
+    set({ conversations: sortConversationsByUpdateDate(conversations) });
   },
 
   async createGroup({ name, groupMemberIds }) {
@@ -324,24 +336,30 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     });
     const group = response.data;
     const { conversations } = get();
-    set({ conversations: [...conversations, group] });
+    set({ conversations: sortConversationsByUpdateDate([...conversations, group]) });
     return group;
   },
 
   async removeConversation({ conversationId }) {
     const response = await conversationSocket.emitWithAck('removeConversation', { conversationId });
     const { conversations } = get();
-    set({ conversations: conversations.filter((c) => c.id !== conversationId) });
+    set({
+      conversations: sortConversationsByUpdateDate(
+        conversations.filter((c) => c.id !== conversationId),
+      ),
+    });
   },
 
   async removeMessage({ messageId }) {
     const response = await conversationSocket.emitWithAck('softRemoveMessage', { messageId });
     const { conversations } = get();
     set({
-      conversations: conversations.map((conversation) => ({
-        ...conversation,
-        messages: conversation.messages.filter((m) => m.id !== messageId),
-      })),
+      conversations: sortConversationsByUpdateDate(
+        conversations.map((conversation) => ({
+          ...conversation,
+          messages: conversation.messages.filter((m) => m.id !== messageId),
+        })),
+      ),
     });
   },
 
@@ -351,15 +369,17 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     const { conversations } = get();
     if (updatedMessage) {
       set({
-        conversations: conversations.map((conversation) => ({
-          ...conversation,
-          messages: conversation.messages.map((message) => {
-            if (message.id === updatedMessage.id) {
-              return updatedMessage;
-            }
-            return message;
-          }),
-        })),
+        conversations: sortConversationsByUpdateDate(
+          conversations.map((conversation) => ({
+            ...conversation,
+            messages: conversation.messages.map((message) => {
+              if (message.id === updatedMessage.id) {
+                return updatedMessage;
+              }
+              return message;
+            }),
+          })),
+        ),
       });
     }
   },
@@ -370,24 +390,26 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     const { conversations } = get();
     if (user) {
       set({
-        conversations: conversations.map((conversation) => {
-          const foundUser = conversation.participants.find((p) => p.id === user.userId);
-          if (foundUser) {
-            let updatedUser: User = {
-              ...foundUser,
-              online: user.isOnline,
-              lastActive: user.isOnline ? new Date() : new Date(user.lastActive),
-            };
-            return {
-              ...conversation,
-              participants: conversation.participants
-                .filter((p) => p.id !== foundUser.id)
-                .concat(updatedUser),
-            };
-          } else {
-            return conversation;
-          }
-        }),
+        conversations: sortConversationsByUpdateDate(
+          conversations.map((conversation) => {
+            const foundUser = conversation.participants.find((p) => p.id === user.userId);
+            if (foundUser) {
+              let updatedUser: User = {
+                ...foundUser,
+                online: user.isOnline,
+                lastActive: user.isOnline ? new Date() : new Date(user.lastActive),
+              };
+              return {
+                ...conversation,
+                participants: conversation.participants
+                  .filter((p) => p.id !== foundUser.id)
+                  .concat(updatedUser),
+              };
+            } else {
+              return conversation;
+            }
+          }),
+        ),
       });
     }
   },
@@ -423,7 +445,7 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
       });
     });
 
-    set({ conversations: updatedConversations });
+    set({ conversations: sortConversationsByUpdateDate(updatedConversations) });
   },
 
   async reactToMessage({ messageId, reactionType }) {
@@ -439,16 +461,18 @@ export const useConversationStore = create<ConversationStore>()((set, get) => ({
     // Update message into state
     const { conversations } = get();
     set({
-      conversations: conversations.map((c) => ({
-        ...c,
-        messages: c.messages.map((m) => {
-          const matchMessage = m.id === messageId;
-          if (!matchMessage) {
-            return m;
-          }
-          return message;
-        }),
-      })),
+      conversations: sortConversationsByUpdateDate(
+        conversations.map((c) => ({
+          ...c,
+          messages: c.messages.map((m) => {
+            const matchMessage = m.id === messageId;
+            if (!matchMessage) {
+              return m;
+            }
+            return message;
+          }),
+        })),
+      ),
     });
   },
 }));
