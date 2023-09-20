@@ -28,12 +28,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     async function setupStores() {
       if (!refreshToken) return;
 
-      await contactsStoreInit();
-      console.log('get contacts');
-      await getContacts();
       await conversationStoreInit();
       await getConversations();
-      console.log('get convs');
+
+      await contactsStoreInit();
+      await getContacts();
     }
 
     setupStores();
