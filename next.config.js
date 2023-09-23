@@ -9,9 +9,11 @@ const nextConfig = {
   },
 };
 
+const url = new URL(process.env.NEXT_PUBLIC_BACKEND_URL);
+
 module.exports = {
   images: {
-    domains: ['localhost']
+    domains: ['localhost', url.hostname],
   },
   typescript: {
     ignoreBuildErrors: true,
